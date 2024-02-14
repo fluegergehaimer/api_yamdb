@@ -11,7 +11,7 @@ TEXT_LIMIT = 20
 
 class NameSlugModel(models.Model):
     name = models.CharField(
-        verbose_name='title',
+        verbose_name='Название',
         max_length=128,
     )
     slug = models.SlugField(
@@ -28,49 +28,43 @@ class NameSlugModel(models.Model):
 
 class Genre(NameSlugModel):
     class Meta:
-        verbose_name = 'genre'
-        verbose_name_plural = 'genres'
+        verbose_name = 'Жанр'
+        verbose_name_plural = 'Жанры'
         ordering = ('name',)
-
-        def __str__(self) -> str:
-            return self.name[:TEXT_LIMIT]
 
 
 class Category(NameSlugModel):
     class Meta:
-        verbose_name = 'category'
-        verbose_name_plural = 'categories'
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
         ordering = ('name',)
-
-        def __str__(self) -> str:
-            return self.name[:TEXT_LIMIT]
 
 
 class Title(models.Model):
     name = models.CharField(
-        verbose_name='title',
+        verbose_name='Название',
         max_length=128,
     )
     year = models.SmallIntegerField(
-        verbose_name='year',
+        verbose_name='Год',
         validators=[
             MinValueValidator(1888),
             MaxValueValidator(timezone.now().year),
         ]
     )
     description = models.TextField(
-        verbose_name='description',
+        verbose_name='Описание',
         blank=True,
     )
     genre = models.ManyToManyField(
         Genre,
         through='GenreTitle',
-        verbose_name='genre',
+        verbose_name='Жанр',
         related_name='title_genre'
     )
     category = models.ForeignKey(
         Category,
-        verbose_name='category',
+        verbose_name='Категория',
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
@@ -78,8 +72,8 @@ class Title(models.Model):
     )
 
     class Meta:
-        verbose_name = 'work'
-        verbose_name_plural = 'works'
+        verbose_name = 'Произведение'
+        verbose_name_plural = 'Произведения'
         ordering = ('year', 'name')
 
     def __str__(self):
@@ -99,7 +93,7 @@ class GenreTitle(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Жанры произведения'
+        verbose_name = 'Жанр произведения'
         verbose_name_plural = 'Жанры произведений'
 
     def __str__(self):
@@ -113,7 +107,7 @@ class Review(models.Model):
         related_name='reviews',
     )
     text = models.TextField(
-        verbose_name='Text of feedback',
+        verbose_name='Текст отзыва',
         help_text='Оставить отзыв.',
     )
     author = models.ForeignKey(
@@ -126,7 +120,7 @@ class Review(models.Model):
             MinValueValidator(1, MESSAGE_1),
             MaxValueValidator(10, MESSAGE_2)
         ],
-        verbose_name='Grade',
+        verbose_name='Оценка',
     )
     pub_date = models.DateTimeField(
         auto_now_add=True,
@@ -134,8 +128,8 @@ class Review(models.Model):
     )
 
     class Meta:
-        verbose_name = 'review'
-        verbose_name_plural = 'reviews'
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
         ordering = ('-pub_date',)
         constraints = [
             models.UniqueConstraint(
@@ -155,7 +149,7 @@ class Comment(models.Model):
         related_name='comments',
     )
     text = models.TextField(
-        verbose_name='comment_text',
+        verbose_name='Текст комментария',
     )
     author = models.ForeignKey(
         User,
@@ -169,8 +163,8 @@ class Comment(models.Model):
     )
 
     class Meta:
-        verbose_name = 'comments'
-        verbose_name_plural = 'comments'
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
         ordering = ('-pub_date',)
 
     def __str__(self):

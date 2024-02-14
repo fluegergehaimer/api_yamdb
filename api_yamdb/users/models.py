@@ -24,23 +24,5 @@ class CustomUser(AbstractUser):
         default='юзер',
     )
 
-    @property
-    def is_user(self):
-        return self.role == self.USER
-
-    @property
-    def is_moderator(self):
-        return self.role == self.MODERATOR
-
-    @property
-    def is_admin(self):
-        return self.role == self.ADMIN
-
-    class Meta:
-        ordering = ('username',)
-
-    def __str__(self):
-        return self.username
-
 
 User = get_user_model()
