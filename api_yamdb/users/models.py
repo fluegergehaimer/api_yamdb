@@ -21,7 +21,7 @@ class CustomUser(AbstractUser):
         'Пользовательская роль',
         max_length=16,
         choices=CHOICES,
-        default='юзер',
+        default='user',
     )
 
 
