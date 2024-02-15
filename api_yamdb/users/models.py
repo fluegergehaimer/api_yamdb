@@ -1,3 +1,5 @@
+import secrets
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -23,6 +25,30 @@ class CustomUser(AbstractUser):
         choices=CHOICES,
         default='user',
     )
+    email = models.EmailField(max_length=254, unique=True)
+    confirmation_code = models.CharField(
+        max_length=16,
+        blank=True,
+    )
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+
+    def __str__(self):
+        return self.email
+
+    def save(self, *args, **kwargs):
+        if not self.confirmation_code:
+            self.confirmation_code = secrets.token_urlsafe(16)
+        super().save(*args, **kwargs)
+
+    def get_full_name(self):
+        """Для обработки электронной почты возвращаем username. """
+        return self.username
+
+    def get_short_name(self):
+        """ Аналогично методу get_full_name(). """
+        return self.username
 
 
 User = get_user_model()

@@ -19,7 +19,7 @@ from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/users/', include('users.urls')),  #  Временный путь. Возможно после создания api нужно будет пенести туда
+    path('api/v1/', include('users.urls')),  #  Временный путь. Возможно после создания api нужно будет пенести туда
     path(
         'redoc/',
         TemplateView.as_view(template_name='redoc.html'),
