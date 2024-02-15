@@ -1,18 +1,20 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import mixins, permissions, status, viewsets
-from rest_framework.permissions import AllowAny
+from rest_framework import mixins, status, viewsets
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
+from . import permissions
 from .models import User
-from .serializers import AuthenticationSerializer, RegistrationSerializer, UserUpdateSerializer, UserSerializer
+from .serializers import (AuthenticationSerializer, RegistrationSerializer,
+                          UserUpdateSerializer, UserSerializer)
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_url_kwarg = 'username'
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAdmin,)
 
     def get_object(self):
         username = self.kwargs.get('username')
@@ -26,6 +28,7 @@ class UserRetrieveUpdateViewSet(
 ):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = (IsAuthenticated,)
 
     def get_serializer_class(self):
         if self.action == 'update':
@@ -54,8 +57,8 @@ class RegistrationAPIView(APIView):
 
 
 class AuthenticationAPIView(APIView):
-    permission_classes = (AllowAny,)
     serializer_class = AuthenticationSerializer
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
