@@ -24,6 +24,7 @@ class CustomUser(AbstractUser):
         max_length=16,
         choices=CHOICES,
         default='user',
+        # blank=True
     )
     email = models.EmailField(max_length=254, unique=True)
     confirmation_code = models.CharField(
@@ -33,6 +34,12 @@ class CustomUser(AbstractUser):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
+
+    class Meta:
+
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+        ordering = ('id',)
 
     def __str__(self):
         return self.email
