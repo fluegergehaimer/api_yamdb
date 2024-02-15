@@ -13,13 +13,12 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 
 from api.filters import TitlesFilter
-from api.mixins import ListCreateDestroyViewSet
-from api.permissions import AccessOrReadOnly, IsAdmin, ReadOnly
 from api.serializers import (
     CategorySerializer, CommentSerializer, GenreSerializer, ReviewSerializer, TitleCreateUpdateSerializer, TitleSerializer,
 )
 from reviews.models import Category, Genre, Review, Title
 from users.models import User
+from users import permissions
 
 
 
@@ -33,7 +32,7 @@ class ListCreateDestroyViewSet(mixins.ListModelMixin,
 class CategoriesViewSet(ListCreateDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    #permission_classes =
+    permission_classes = (permissions.IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -43,7 +42,7 @@ class CategoriesViewSet(ListCreateDestroyViewSet):
 class GenresViewSet(ListCreateDestroyViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-   # permission_classes = 
+    permission_classes = (permissions.IsAdminOrReadOnly,)
     lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
@@ -53,7 +52,7 @@ class GenresViewSet(ListCreateDestroyViewSet):
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(Avg("reviews__score"))
     serializer_class = TitleSerializer
-    #permission_classes = 
+    permission_classes = (permissions.IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = TitlesFilter
     ordering = ('id',)
@@ -66,7 +65,7 @@ class TitlesViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    #permission_classes = 
+    permission_classes = (permissions.IsAuthorModeratorAdminOrReadOnly,)
     filter_backends = (filters.OrderingFilter,)
     ordering = ('id',)
 
@@ -81,7 +80,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    #permission_classes = 
+    permission_classes = (permissions.IsAuthorModeratorAdminOrReadOnly,)
     filter_backends = (filters.OrderingFilter,)
     ordering = ('id',)
 
