@@ -5,12 +5,11 @@ from .views import AuthenticationAPIView, RegistrationAPIView, UserRetrieveUpdat
 
 router_v1 = routers.DefaultRouter()
 router_v1.register(r"users", UserViewSet, basename="users",)
-print(router_v1.urls)
 
 urlpatterns = [
-    path("auth/signup/", RegistrationAPIView.as_view(), name="signup"),
-    path("auth/token/", AuthenticationAPIView.as_view(), name="token"),
-    path("users/me/", UserRetrieveUpdateViewSet.as_view({'get': 'retrieve', 'patch': 'update'}), name="me"),
-    path("", include(router_v1.urls)),
+    path("v1/auth/signup/", RegistrationAPIView.as_view(), name="signup"),
+    path("v1/auth/token/", AuthenticationAPIView.as_view(), name="token"),
+    path("v1/users/me/", UserRetrieveUpdateViewSet.as_view({'get': 'retrieve', 'patch': 'update'}), name="me"),
+    path("v1/", include(router_v1.urls)),
 ]
 
