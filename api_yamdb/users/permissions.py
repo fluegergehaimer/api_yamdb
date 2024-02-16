@@ -23,12 +23,6 @@ class IsAdminOrReadOnly(permissions.BasePermission):
 
 class IsAuthorModeratorAdminOrReadOnly(permissions.BasePermission):
 
-    # def has_permission(self, request, view):
-    #     if request.method in permissions.SAFE_METHODS:
-    #         return True
-    #     if request.method == 'POST':
-    #         return request.user.is_authenticated
-
     def has_object_permission(self, request, view, obj):
         """Проверяет, что user - это автор объекта либо moderator/admin. """
         return (
@@ -40,3 +34,10 @@ class IsAuthorModeratorAdminOrReadOnly(permissions.BasePermission):
                 or request.user.role in ('moderator', 'admin')
             )
         )
+
+
+class IsUserOrIsModeratorOrIsAdmin(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (request.user.role == 'user'
+                or request.user.role == 'moderator'
+                or request.user.role == 'admin')

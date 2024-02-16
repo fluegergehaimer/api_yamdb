@@ -1,3 +1,5 @@
+import re
+
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
@@ -80,6 +82,20 @@ class RegistrationSerializer(serializers.ModelSerializer):
             )
 
         return data
+
+    def validate_username(self, username):
+
+        pattern = re.compile('^[\w.@+-]+\Z')
+        if not pattern.findall(username):
+            raise serializers.ValidationError(
+                {
+                    'username': [
+                        'username не соответствует паттерну.'
+                    ]
+                }
+            )
+
+        return username
 
     def create(self, validated_data):
         new_user = User.objects.create_user(**validated_data)

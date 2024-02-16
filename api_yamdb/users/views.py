@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import mixins, status, viewsets
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
@@ -15,7 +16,9 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     lookup_url_kwarg = 'username'
     permission_classes = (permissions.IsAdmin,)
-    http_method_names = ['get', 'post', 'delete', 'patch',]
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
+    search_fields = ('username',)
+    http_method_names = ['get', 'post', 'delete', 'patch', ]
 
     def get_object(self):
         username = self.kwargs.get('username')
