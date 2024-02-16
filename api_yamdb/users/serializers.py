@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import CHOICES, User
+from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -59,14 +59,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
                     }
                 )
 
-            send_mail(
-                subject='Регистрация',
-                message=f'Поздравляем! Пользоваетель {user_exists.get_full_name()} зарегистрирован.'
-                        f'Ваш confirmation_code: {user_exists.confirmation_code}',
-                from_email='from@example.com',
-                recipient_list=[user_exists.email],
-                fail_silently=True,
-            )
+            self.send_success_email(user_exists)
             data['is_user_exist'] = True
             return data
 
@@ -99,15 +92,18 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         new_user = User.objects.create_user(**validated_data)
+        self.send_success_email(new_user)
+        return new_user
+
+    def send_success_email(self, user):
         send_mail(
             subject='Регистрация',
-            message=f'Поздравляем! Пользоваетель {new_user.get_full_name()} зарегистрирован.'
-                    f'Ваш confirmation_code: {new_user.confirmation_code}',
+            message=f'Поздравляем! Пользоваетель {user.get_full_name()} зарегистрирован.'
+                    f'Ваш confirmation_code: {user.confirmation_code}',
             from_email='from@example.com',
-            recipient_list=[new_user.email],
+            recipient_list=[user.email],
             fail_silently=True,
         )
-        return new_user
 
 
 class AuthenticationSerializer(serializers.ModelSerializer):
