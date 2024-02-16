@@ -41,8 +41,8 @@ class TitlesViewSet(viewsets.ModelViewSet):
     serializer_class = TitleSerializer
     permission_classes = (permissions.IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    http_method_names = ['get', 'post', 'patch', 'delete']
     filterset_class = TitleFilter
-    http_method_names = ('get', 'post', 'patch', 'delete')
     ordering = ('id',)
 
     def get_serializer_class(self):
