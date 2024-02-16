@@ -29,8 +29,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = ['email', 'username']
         extra_kwargs = {
-            'email': {'validators': []},  # Убираем валидаторы для поля email
-            'username': {'validators': []},  # Убираем валидаторы для поля username
+            'email': {'validators': []},
+            'username': {'validators': []},
         }
 
     def validate(self, data):
@@ -82,7 +82,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        print("метод создания юзера_______________________")
         new_user = User.objects.create_user(**validated_data)
         send_mail(
             subject='Регистрация',

@@ -41,29 +41,6 @@ class UserRetrieveUpdateViewSet(
         return user
 
 
-# class RegistrationAPIView(APIView):
-#     """
-#     Разрешить всем пользователям (аутентифицированным и нет) доступ к данному эндпоинту.
-#     """
-#     serializer_class = RegistrationSerializer
-#     permission_classes = (AllowAny,)
-#
-#     def post(self, request):
-#         serializer = self.serializer_class(data=request.data)
-#         if serializer.is_valid():
-#             username = serializer.validated_data.get('username')
-#             user_exists = User.objects.filter(username=username).first()
-#             print("user_exists_____________________", user_exists)
-#
-#             if user_exists:
-#                 print("Такой юзер уже есть")
-#                 return Response(serializer.data, status=status.HTTP_200_OK)
-#
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         else:
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 class RegistrationAPIView(APIView):
     """
     Разрешить всем пользователям (аутентифицированным и нет) доступ к данному эндпоинту.
@@ -80,7 +57,6 @@ class RegistrationAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class AuthenticationAPIView(APIView):
