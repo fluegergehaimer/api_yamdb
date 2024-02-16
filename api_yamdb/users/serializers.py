@@ -1,3 +1,5 @@
+import re
+
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
@@ -28,19 +30,81 @@ class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['email', 'username']
+        extra_kwargs = {
+            'email': {'validators': []},
+            'username': {'validators': []},
+        }
+
+    def validate(self, data):
+        username = data.get('username', None)
+
+        if username == 'me':
+            raise serializers.ValidationError(
+                {
+                    'username': [
+                        'Использовать имя "me" в качестве username запрещено.'
+                    ]
+                }
+            )
+
+        user_exists = User.objects.filter(username=username).first()
+
+        if user_exists:
+            if data.get('email') != user_exists.email:
+                raise serializers.ValidationError(
+                    {
+                        'email': [
+                            'Нельзя изменить почту.'
+                        ]
+                    }
+                )
+
+            send_mail(
+                subject='Регистрация',
+                message=f'Поздравляем! Пользоваетель {user_exists.get_full_name()} зарегистрирован.'
+                        f'Ваш confirmation_code: {user_exists.confirmation_code}',
+                from_email='from@example.com',
+                recipient_list=[user_exists.email],
+                fail_silently=True,
+            )
+            data['is_user_exist'] = True
+            return data
+
+        # Если пользователя нет в базе - проверяем не занят ли email
+        email = data.get('email', None)
+        if User.objects.filter(email=email):
+            raise serializers.ValidationError(
+                {
+                    'email': [
+                        'email уже используется.'
+                    ]
+                }
+            )
+
+        return data
+
+    def validate_username(self, username):
+
+        pattern = re.compile('^[\w.@+-]+\Z')
+        if not pattern.findall(username):
+            raise serializers.ValidationError(
+                {
+                    'username': [
+                        'username не соответствует паттерну.'
+                    ]
+                }
+            )
+
+        return username
 
     def create(self, validated_data):
-        if validated_data.get('username') == 'me':
-            raise serializers.ValidationError(
-                'Использовать имя "me" в качестве username запрещено.'
-            )
         new_user = User.objects.create_user(**validated_data)
         send_mail(
             subject='Регистрация',
             message=f'Поздравляем! Пользоваетель {new_user.get_full_name()} зарегистрирован.'
                     f'Ваш confirmation_code: {new_user.confirmation_code}',
             from_email='from@example.com',
-            recipient_list=['to@example.com'],
+            recipient_list=[new_user.email],
             fail_silently=True,
         )
         return new_user

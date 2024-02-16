@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import mixins, status, viewsets
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
@@ -15,6 +16,9 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     lookup_url_kwarg = 'username'
     permission_classes = (permissions.IsAdmin,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
+    search_fields = ('username',)
+    http_method_names = ['get', 'post', 'delete', 'patch', ]
 
     def get_object(self):
         username = self.kwargs.get('username')
@@ -50,7 +54,9 @@ class RegistrationAPIView(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            if not serializer.validated_data.get('is_user_exist', None):
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

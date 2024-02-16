@@ -44,9 +44,7 @@ Pyrogram==2.0.106
 PySocks==1.7.1
 pytest==6.2.4
 pytest-django==4.4.0
-pytest-lazy-fixture==0.6.3
 pytest-pythonpath==0.7.3
-pytest-subtests==0.9.0
 python-dotenv==1.0.0
 python-telegram-bot==13.7
 python3-openid==3.2.0
