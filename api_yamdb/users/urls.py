@@ -18,4 +18,3 @@ urlpatterns = [
     path("v1/users/", include(router_v1.urls)),
     path("", include("api.urls")),
 ]
-

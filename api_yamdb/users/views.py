@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
+
 from . import permissions
 from .models import User
 from .serializers import (AuthenticationSerializer, RegistrationSerializer,
@@ -33,7 +34,6 @@ class UserRetrieveUpdateViewSet(
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
-
     def get_serializer_class(self):
         print('self.action______________________________', self.action)
         print('role____________________________', self.request.user.role)
