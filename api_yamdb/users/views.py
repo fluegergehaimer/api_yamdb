@@ -35,6 +35,8 @@ class UserRetrieveUpdateViewSet(
     permission_classes = (IsAuthenticated,)
 
     def get_serializer_class(self):
+        print('self.action______________________________', self.action)
+        print('role____________________________', self.request.user.role)
         if self.action == 'update':
             return UserUpdateSerializer
         return UserSerializer
