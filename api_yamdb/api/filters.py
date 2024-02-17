@@ -1,9 +1,11 @@
+"""Фильтры используемые в модуле."""
 from django_filters import rest_framework as filters
 
 from reviews.models import Title
 
 
 class TitleFilter(filters.FilterSet):
+    """Фильтр поиска названия по нескольким полям."""
 
     category = filters.CharFilter(
         field_name='category__slug',

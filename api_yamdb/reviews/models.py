@@ -1,3 +1,4 @@
+"""Модели."""
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils import timezone
@@ -11,6 +12,8 @@ TEXT_LIMIT = 20
 
 
 class NameSlugModel(models.Model):
+    """Базовая модель."""
+
     name = models.CharField(
         verbose_name='Название',
         max_length=128,
@@ -21,27 +24,40 @@ class NameSlugModel(models.Model):
     )
 
     class Meta:
+        """Class Meta."""
+
         abstract = True
 
     def __str__(self):
+        """Функция __str__."""
         return self.name[:TEXT_LIMIT]
 
 
 class Genre(NameSlugModel):
+    """Модель жанра."""
+
     class Meta:
+        """Class Meta."""
+
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
         ordering = ('name',)
 
 
 class Category(NameSlugModel):
+    """Модель категории."""
+
     class Meta:
+        """Class Meta."""
+
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
         ordering = ('name',)
 
 
 class Title(models.Model):
+    """Модель произведения."""
+
     name = models.CharField(
         verbose_name='Название',
         max_length=128,
@@ -74,15 +90,20 @@ class Title(models.Model):
     )
 
     class Meta:
+        """Class Meta."""
+
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
         ordering = ('year', 'name')
 
     def __str__(self):
+        """Функция __str__."""
         return self.name
 
 
 class GenreTitle(models.Model):
+    """Модель жанра произведения."""
+
     genre = models.ForeignKey(
         Genre,
         on_delete=models.CASCADE,
@@ -95,14 +116,19 @@ class GenreTitle(models.Model):
     )
 
     class Meta:
+        """Class Meta."""
+
         verbose_name = 'Жанр произведения'
         verbose_name_plural = 'Жанры произведений'
 
     def __str__(self):
+        """Функция __str__."""
         return f'{self.title} принадлежит жанру {self.genre}'
 
 
 class Review(models.Model):
+    """Модель отзыва."""
+
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
@@ -130,6 +156,8 @@ class Review(models.Model):
     )
 
     class Meta:
+        """Class Meta."""
+
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
         ordering = ('-pub_date',)
@@ -141,10 +169,13 @@ class Review(models.Model):
         ]
 
     def __str__(self):
+        """Функция __str__."""
         return f'{self.text[:TEXT_LIMIT]}, {self.score}'
 
 
 class Comment(models.Model):
+    """Модель комментария."""
+
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
@@ -165,9 +196,12 @@ class Comment(models.Model):
     )
 
     class Meta:
+        """Class Meta."""
+
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
         ordering = ('-pub_date',)
 
     def __str__(self):
+        """Функция __str__."""
         return self.text[:TEXT_LIMIT]
