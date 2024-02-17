@@ -1,3 +1,4 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
@@ -59,13 +60,17 @@ class TitleCreateUpdateSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    # author = serializers.StringRelatedField(
-    #     read_only=True
-    # )
     author = serializers.SlugRelatedField(
         slug_field="username",
         read_only=True,
         default=serializers.CurrentUserDefault(),
+    )
+
+    score = serializers.IntegerField(
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(10)
+        ]
     )
 
     class Meta:
@@ -85,9 +90,6 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    # author = serializers.StringRelatedField(
-    #     read_only=True
-    # )
     author = serializers.SlugRelatedField(
         slug_field="username",
         read_only=True,
