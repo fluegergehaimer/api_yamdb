@@ -24,6 +24,7 @@ class CustomUser(AbstractUser):
         max_length=16,
         choices=CHOICES,
         default='user',
+        blank=True,
     )
     email = models.EmailField(max_length=254, unique=True)
     confirmation_code = models.CharField(
