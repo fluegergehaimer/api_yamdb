@@ -18,5 +18,7 @@ class TitleFilter(filters.FilterSet):
     )
 
     class Meta:
+        """Class Meta."""
+
         model = Title
         fields = ('category', 'genre', 'name', 'year')
