@@ -1,3 +1,5 @@
+"""Модуль для переопределения модели User."""
+
 import secrets
 
 from django.contrib.auth import get_user_model
@@ -13,6 +15,8 @@ CHOICES = (
 
 
 class CustomUser(AbstractUser):
+    """Модель кастомного юзера."""
+
     bio = models.TextField(
         'Биография',
         blank=True
@@ -34,15 +38,18 @@ class CustomUser(AbstractUser):
     REQUIRED_FIELDS = ['username']
 
     class Meta:
+        """Meta-клас. Задаёт сортировку по полю id."""
 
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
         ordering = ('id',)
 
     def __str__(self):
+        """Возвращает email в качестве главного поля пользователя."""
         return self.email
 
     def save(self, *args, **kwargs):
+        """Генерирует код-подтверждение и создаёт пользователя."""
         if not self.confirmation_code:
             self.confirmation_code = secrets.token_urlsafe(16)
         super().save(*args, **kwargs)

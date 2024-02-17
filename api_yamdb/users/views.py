@@ -1,3 +1,5 @@
+"""Модуль предвставлений для приложения users."""
+
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
@@ -15,6 +17,8 @@ from .serializers import (
 
 
 class UserViewSet(viewsets.ModelViewSet):
+    """Вьюсет для работы администратора с users."""
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (permissions.IsAdmin,)
@@ -29,6 +33,7 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def me(self, request):
+        """Обрабатывает GET И PATCH запросы к api/v1/users/me."""
         if request.method == 'GET':
             user = get_object_or_404(User, id=request.user.id)
             serializer = UserSerializer(user)
@@ -44,14 +49,16 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class RegistrationAPIView(APIView):
-    """
-    Разрешить всем пользователям доступ к данному эндпоинту.
-    """
+    """Вьюсет для регистрации пользователей."""
 
     serializer_class = RegistrationSerializer
     permission_classes = (AllowAny,)
 
     def post(self, request):
+        """Обрабатывает POST запросы к api/v1/auth/signup/.
+
+        Если данные не валидны возвращает ошибку.
+        """
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             if not serializer.validated_data.get('is_user_exist', None):
@@ -66,10 +73,16 @@ class RegistrationAPIView(APIView):
 
 
 class AuthenticationAPIView(APIView):
+    """Вьюсет для аутентификации пользователей по коду подтверждения."""
+
     serializer_class = AuthenticationSerializer
     permission_classes = (AllowAny,)
 
     def post(self, request):
+        """Обрабатывает POST запросы к api/v1/auth/token/.
+
+        Если данные не валидны возвращает ошибку.
+        """
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             return Response(serializer.data, status=status.HTTP_200_OK)
