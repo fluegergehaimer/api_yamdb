@@ -6,11 +6,9 @@ from django.db import models
 
 
 CHOICES = (
-    ('anonymous', 'аноним'),
-    ('user', 'юзер'),
-    ('moderator', 'модератор'),
-    ('admin', 'админ'),
-    ('superadmin', 'суперадмин'),
+    'user',
+    'moderator',
+    'admin',
 )
 
 
@@ -50,11 +48,11 @@ class CustomUser(AbstractUser):
         super().save(*args, **kwargs)
 
     def get_full_name(self):
-        """Для обработки электронной почты возвращаем username. """
+        """Для обработки электронной почты возвращаем username."""
         return self.username
 
     def get_short_name(self):
-        """ Аналогично методу get_full_name(). """
+        """Аналогично методу get_full_name()."""
         return self.username
 
 

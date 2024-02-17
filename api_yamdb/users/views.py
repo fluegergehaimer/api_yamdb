@@ -45,7 +45,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class RegistrationAPIView(APIView):
     """
-    Разрешить всем пользователям (аутентифицированным и нет) доступ к данному эндпоинту.
+    Разрешить всем пользователям доступ к данному эндпоинту.
     """
 
     serializer_class = RegistrationSerializer

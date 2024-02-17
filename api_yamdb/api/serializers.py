@@ -58,7 +58,6 @@ class TitleCreateUpdateSerializer(serializers.ModelSerializer):
         return title
 
 
-
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         slug_field='username',
