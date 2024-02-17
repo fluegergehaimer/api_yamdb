@@ -294,24 +294,116 @@ api/v1/users/
 ```
 POST запрос:
 api/v1/users/
+{
+"username": "string",
+"email": "user@example.com",
+"first_name": "string",
+"last_name": "string",
+"bio": "string",
+"role": "user"
+}
 ```
 Ответ:
 ```
 {
-"id": 0,
-"name": "string",
-"year": 0,
-"rating": 0,
-"description": "string",
-"genre": [
-{}
-],
-"category": {
-"name": "string",
-"slug": "string"
-}
+"username": "string",
+"email": "user@example.com",
+"first_name": "string",
+"last_name": "string",
+"bio": "string",
+"role": "user"
 }
 ```
+Получение пользователя по username:
+
+```
+GET запрос:
+api/v1/users/{username}/
+```
+Ответ:
+```
+{
+"username": "string",
+"email": "user@example.com",
+"first_name": "string",
+"last_name": "string",
+"bio": "string",
+"role": "user"
+}
+```
+Изменение данных пользователя по username:
+```
+PATCH запрос:
+api/v1/users/{username}/
+{
+"username": "string",
+"email": "user@example.com",
+"first_name": "string",
+"last_name": "string",
+"bio": "string",
+"role": "user"
+}
+```
+Ответ:
+```
+{
+"username": "string",
+"email": "user@example.com",
+"first_name": "string",
+"last_name": "string",
+"bio": "string",
+"role": "user"
+}
+```
+Удаление пользователя по username:
+```
+DELETE запрос:
+api/v1/users/{username}/
+```
+
+Получение данных своей учетной записи:
+```
+GET запрос:
+api/v1/users/me/
+```
+Ответ:
+```
+{
+"username": "string",
+"email": "user@example.com",
+"first_name": "string",
+"last_name": "string",
+"bio": "string",
+"role": "user"
+}
+```
+Изменение данных своей учетной записи:
+```
+PATCH запрос:
+api/v1/users/me/
+{
+"username": "string",
+"email": "user@example.com",
+"first_name": "string",
+"last_name": "string",
+"bio": "string"
+}
+```
+Ответ:
+```
+{
+"username": "string",
+"email": "user@example.com",
+"first_name": "string",
+"last_name": "string",
+"bio": "string",
+"role": "user"
+}
+```
+
+
+
+
 
 Авторы: 
 ```
