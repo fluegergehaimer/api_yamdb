@@ -16,6 +16,7 @@ from users import permissions
 
 HTTP_METHODS = ('get', 'post', 'patch', 'delete')
 
+
 class ListCreateDestroyViewSet(mixins.ListModelMixin,
                                mixins.CreateModelMixin,
                                mixins.DestroyModelMixin,

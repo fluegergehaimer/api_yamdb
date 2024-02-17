@@ -29,7 +29,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
-    """ Сериализация регистрации и создания нового пользователя. """
+    """Сериализация регистрации и создания нового пользователя."""
 
     class Meta:
         model = User
@@ -82,7 +82,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     def validate_username(self, username):
 
-        pattern = re.compile('^[\w.@+-]+\Z')
+        pattern = re.compile('^[\\w.@+-]+\\Z')
         if not pattern.findall(username):
             raise serializers.ValidationError(
                 {
@@ -112,7 +112,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 
 class AuthenticationSerializer(serializers.ModelSerializer):
-    """ Сериализация проверки confirmation_code и отправки token. """
+    """Сериализация проверки confirmation_code и отправки token."""
 
     username = serializers.CharField()
     confirmation_code = serializers.CharField()
@@ -141,5 +141,5 @@ class AuthenticationSerializer(serializers.ModelSerializer):
         return data
 
     def to_representation(self, instance):
-        """Переопределен для возврата только токена. """
+        """Переопределен для возврата только токена."""
         return {'token': instance['token']}
