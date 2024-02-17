@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
@@ -50,13 +51,13 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = (permissions.IsAdmin,)
     lookup_field = 'username'
-    filter_backends = (filters.SearchFilter)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
     http_method_names = ('get', 'post', 'patch', 'delete')
     search_fields = ('username')
     @action(
         detail=False,
         methods=('get', 'patch'),
-        permission_classes=(IsAuthenticated)
+        permission_classes=(IsAuthenticated,)
     )
     def me(self, request):
         if request.method == 'GET':
