@@ -1,5 +1,5 @@
-from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db import models
 from django.utils import timezone
 
 from users.models import User
@@ -8,6 +8,7 @@ from users.models import User
 MESSAGE_1 = 'Оценка не может быть ниже 1.'
 MESSAGE_2 = 'Оценка не может быть выше 10.'
 TEXT_LIMIT = 20
+
 
 class NameSlugModel(models.Model):
     name = models.CharField(

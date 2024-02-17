@@ -12,16 +12,20 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role',)
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role',
+        )
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
-    """Для PATCH запроса к api/v1/users/me/ """
+    """Для PATCH запроса к api/v1/users/me/."""
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role',)
-        read_only_fields = ("role",)
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role',
+        )
+        read_only_fields = ('role',)
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -98,7 +102,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
     def send_success_email(self, user):
         send_mail(
             subject='Регистрация',
-            message=f'Поздравляем! Пользоваетель {user.get_full_name()} зарегистрирован.'
+            message=f'Поздравляем! '
+                    f'Пользоваетель {user.get_full_name()} зарегистрирован.'
                     f'Ваш confirmation_code: {user.confirmation_code}',
             from_email='from@example.com',
             recipient_list=[user.email],
@@ -108,6 +113,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 class AuthenticationSerializer(serializers.ModelSerializer):
     """ Сериализация проверки confirmation_code и отправки token. """
+
     username = serializers.CharField()
     confirmation_code = serializers.CharField()
 

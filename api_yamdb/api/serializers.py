@@ -26,7 +26,7 @@ class TitleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = "__all__"
+        fields = '__all__'
 
 
 class TitleCreateUpdateSerializer(serializers.ModelSerializer):
@@ -61,7 +61,7 @@ class TitleCreateUpdateSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        slug_field="username",
+        slug_field='username',
         read_only=True,
         default=serializers.CurrentUserDefault(),
     )
@@ -91,7 +91,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        slug_field="username",
+        slug_field='username',
         read_only=True,
         default=serializers.CurrentUserDefault(),
     )

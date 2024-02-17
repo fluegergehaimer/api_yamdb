@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+
 from api.filters import TitleFilter
 from api.serializers import (
     CategorySerializer, CommentSerializer,
@@ -13,7 +14,7 @@ from reviews.models import Category, Genre, Review, Title
 from users import permissions
 
 
-
+HTTP_METHODS = ('get', 'post', 'patch', 'delete')
 
 class ListCreateDestroyViewSet(mixins.ListModelMixin,
                                mixins.CreateModelMixin,
@@ -37,11 +38,11 @@ class GenresViewSet(ListCreateDestroyViewSet):
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all().annotate(rating=Avg("reviews__score"))
+    queryset = Title.objects.all().annotate(rating=Avg('reviews__score'))
     serializer_class = TitleSerializer
     permission_classes = (permissions.IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = HTTP_METHODS
     filterset_class = TitleFilter
     ordering = ('id',)
 
@@ -58,7 +59,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         IsAuthenticatedOrReadOnly
     )
     filter_backends = (filters.OrderingFilter,)
-    http_method_names = ('get', 'post', 'patch', 'delete')
+    http_method_names = HTTP_METHODS
     ordering = ('id',)
 
     def get_queryset(self):
@@ -77,7 +78,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         IsAuthenticatedOrReadOnly
     )
     filter_backends = (filters.OrderingFilter,)
-    http_method_names = ('get', 'post', 'patch', 'delete')
+    http_method_names = HTTP_METHODS
     ordering = ('id',)
 
     def perform_create(self, serializer):
