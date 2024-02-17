@@ -53,7 +53,7 @@ class UserViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
     http_method_names = ('get', 'post', 'patch', 'delete')
-    search_fields = ('username')
+    search_fields = ('username',)
     @action(
         detail=False,
         methods=('get', 'patch'),
