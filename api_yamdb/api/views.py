@@ -18,7 +18,7 @@ from users import permissions
 HTTP_METHODS = ('get', 'post', 'patch', 'delete')
 
 
-class ListCreateDestroyViewSet(mixins.ListModelMixin,
+class CategoryGenreMixin(mixins.ListModelMixin,
                                mixins.CreateModelMixin,
                                mixins.DestroyModelMixin,
                                viewsets.GenericViewSet):
@@ -31,14 +31,14 @@ class ListCreateDestroyViewSet(mixins.ListModelMixin,
     ordering = ('id',)
 
 
-class CategoriesViewSet(ListCreateDestroyViewSet):
+class CategoriesViewSet(CategoryGenreMixin):
     """Класс категории."""
 
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
-class GenresViewSet(ListCreateDestroyViewSet):
+class GenresViewSet(CategoryGenreMixin):
     """Класс жанры."""
 
     queryset = Genre.objects.all()
@@ -48,13 +48,14 @@ class GenresViewSet(ListCreateDestroyViewSet):
 class TitlesViewSet(viewsets.ModelViewSet):
     """Класс произведения."""
 
-    queryset = Title.objects.all().annotate(rating=Avg('reviews__score'))
+    queryset = Title.objects.all().annotate(
+        rating=Avg('reviews__score')
+    ).order_by('year', 'name')
     serializer_class = TitleSerializer
     permission_classes = (permissions.IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     http_method_names = HTTP_METHODS
     filterset_class = TitleFilter
-    ordering = ('id',)
 
     def get_serializer_class(self):
         """Функция определения сериализатора."""
@@ -73,17 +74,17 @@ class ReviewViewSet(viewsets.ModelViewSet):
     )
     filter_backends = (filters.OrderingFilter,)
     http_method_names = HTTP_METHODS
-    ordering = ('id',)
+
+    def get_title(self):
+        return get_object_or_404(Title, pk=self.kwargs.get('title_id'))
 
     def get_queryset(self):
         """Функция get_queryset."""
-        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
-        return title.reviews.all()
+        return self.get_title().reviews.all()
 
     def perform_create(self, serializer):
         """Функция perfom_create."""
-        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
-        serializer.save(author=self.request.user, title=title)
+        serializer.save(author=self.request.user, title=self.get_title())
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -96,16 +97,18 @@ class CommentViewSet(viewsets.ModelViewSet):
     )
     filter_backends = (filters.OrderingFilter,)
     http_method_names = HTTP_METHODS
-    ordering = ('id',)
+
+    def get_review(self):
+        return get_object_or_404(
+            Review,
+            id=self.kwargs.get('review_id'),
+            title__id=self.kwargs.get('title_id')
+        )
 
     def perform_create(self, serializer):
         """Функция perfom_create."""
-        review = get_object_or_404(Review, id=self.kwargs.get('review_id'),
-                                   title__id=self.kwargs.get('title_id'))
-        serializer.save(author=self.request.user, review=review)
+        serializer.save(author=self.request.user, review=self.get_review())
 
     def get_queryset(self):
         """Функция get_queryset."""
-        review = get_object_or_404(Review, id=self.kwargs.get('review_id'),
-                                   title__id=self.kwargs.get('title_id'))
-        return review.comments.all()
+        return self.get_review().comments.all()
