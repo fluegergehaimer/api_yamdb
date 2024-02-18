@@ -2,12 +2,13 @@
 
 import re
 
+from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import User
+User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -92,7 +93,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     def validate_username(self, username):
         """Валидауия поля username."""
-        pattern = re.compile('^[\\w.@+-]+\\Z')
+        pattern = re.compile('^[\w.@+-]+\Z')
         if not pattern.findall(username):
             raise serializers.ValidationError(
                 {

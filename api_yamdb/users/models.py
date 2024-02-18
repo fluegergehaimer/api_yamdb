@@ -1,20 +1,21 @@
 """Модуль для переопределения модели User."""
 
-import secrets
+from random import choice
 
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+CONFIRMATION_CODE_LENGTH = 16
+CONFIRMATION_CODE_PATTERN = r"^[A-Za-z0-9]+$"
 
 CHOICES = (
-    'user',
-    'moderator',
-    'admin',
+    ('user', 'Обычный пользователь'),
+    ('moderator', 'Модератор'),
+    ('admin', 'Администратор'),
 )
 
 
-class CustomUser(AbstractUser):
+class ExtendedUser(AbstractUser):
     """Модель кастомного юзера."""
 
     bio = models.TextField(
@@ -51,7 +52,7 @@ class CustomUser(AbstractUser):
     def save(self, *args, **kwargs):
         """Генерирует код-подтверждение и создаёт пользователя."""
         if not self.confirmation_code:
-            self.confirmation_code = secrets.token_urlsafe(16)
+            self.confirmation_code = ''.join(choice(CONFIRMATION_CODE_PATTERN) for _ in range(CONFIRMATION_CODE_LENGTH))
         super().save(*args, **kwargs)
 
     def get_full_name(self):
@@ -61,6 +62,3 @@ class CustomUser(AbstractUser):
     def get_short_name(self):
         """Аналогично методу get_full_name()."""
         return self.username
-
-
-User = get_user_model()

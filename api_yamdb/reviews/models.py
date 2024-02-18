@@ -1,9 +1,11 @@
 """Модели."""
+
+from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils import timezone
 
-from users.models import User
+User = get_user_model()
 
 
 MESSAGE_1 = 'Оценка не может быть ниже 1.'
