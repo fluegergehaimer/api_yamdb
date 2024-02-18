@@ -3,16 +3,18 @@
 import re
 
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
+USERNAME_LENGTH = 150
+CONFIRMATION_CODE_LENGTH = 16
 
-class UserSerializer(serializers.ModelSerializer):
-    """Сериалайзер для модели User."""
+
+class UserUserUpdateSerializer(serializers.ModelSerializer):
+    """Базовая модель сериалайзера для модели User."""
 
     class Meta:
         """Meta-класс."""
@@ -21,18 +23,22 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             'username', 'email', 'first_name', 'last_name', 'bio', 'role',
         )
+        abstract = True
 
 
-class UserUpdateSerializer(serializers.ModelSerializer):
+class UserSerializer(UserUserUpdateSerializer):
+    """Сериалайзер для модели User."""
+
+    class Meta(UserUserUpdateSerializer.Meta):
+        """Meta-класс."""
+
+
+class UserUpdateSerializer(UserUserUpdateSerializer):
     """Для PATCH запроса к api/v1/users/me/."""
 
-    class Meta:
+    class Meta(UserUserUpdateSerializer.Meta):
         """Отключает запись в поле role."""
 
-        model = User
-        fields = (
-            'username', 'email', 'first_name', 'last_name', 'bio', 'role',
-        )
         read_only_fields = ('role',)
 
 
@@ -74,8 +80,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
                     }
                 )
 
-            self.send_success_email(user_exists)
-            data['is_user_exist'] = True
             return data
 
         # Если пользователя нет в базе - проверяем не занят ли email
@@ -105,30 +109,18 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
         return username
 
-    def create(self, validated_data):
-        """Создаёт пользователя."""
-        new_user = User.objects.create_user(**validated_data)
-        self.send_success_email(new_user)
-        return new_user
-
-    def send_success_email(self, user):
-        """Отправляет email с кодом подтверждения."""
-        send_mail(
-            subject='Регистрация',
-            message=f'Поздравляем! '
-                    f'Пользоваетель {user.get_full_name()} зарегистрирован.'
-                    f'Ваш confirmation_code: {user.confirmation_code}',
-            from_email='from@example.com',
-            recipient_list=[user.email],
-            fail_silently=True,
-        )
-
 
 class AuthenticationSerializer(serializers.ModelSerializer):
     """Сериализация проверки confirmation_code и отправки token."""
 
-    username = serializers.CharField()
-    confirmation_code = serializers.CharField()
+    username = serializers.CharField(
+        max_length=USERNAME_LENGTH,
+        required=True
+    )
+    confirmation_code = serializers.CharField(
+        max_length=CONFIRMATION_CODE_LENGTH,
+        required=True,
+    )
 
     class Meta:
         """Meta-класс."""
@@ -136,11 +128,11 @@ class AuthenticationSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username', 'confirmation_code']
 
-    def get_access_token(self, user):
-        """Генерирует JWT-токен."""
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
-        return access_token
+    # def get_access_token(self, user):
+    #     """Генерирует JWT-токен."""
+    #     refresh = RefreshToken.for_user(user)
+    #     access_token = str(refresh.access_token)
+    #     return access_token
 
     def validate(self, data):
         """Валидация кода-подтверждения.
@@ -155,11 +147,4 @@ class AuthenticationSerializer(serializers.ModelSerializer):
                 'Отсутствует обязательное поле или оно некорректно'
             )
 
-        access_token = self.get_access_token(user)
-
-        data['token'] = access_token
         return data
-
-    def to_representation(self, instance):
-        """Переопределен для возврата только токена."""
-        return {'token': instance['token']}
