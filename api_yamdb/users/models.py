@@ -1,8 +1,12 @@
 """Модуль для переопределения модели User."""
 
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import RegexValidator
 from django.db import models
+from rest_framework.exceptions import ValidationError
 
+USERNAME_LENGTH = 150
+USERNAME_PATTERN = r'^[\w@.+-_]+$'
 CONFIRMATION_CODE_LENGTH = 16
 ROLE_FIELD_LENGTH = 16
 EMAIL_FILED_LENGTH = 254
@@ -16,9 +20,23 @@ CHOICES = (
 )
 
 
+def validate_not_me(value):
+    if value.lower() == 'me':
+        raise ValidationError('Username cannot be "me".')
+
+
 class ExtendedUser(AbstractUser):
     """Модель кастомного юзера."""
 
+    username = models.CharField(
+        max_length=USERNAME_LENGTH,
+        unique=True,
+        validators=(RegexValidator(regex=USERNAME_PATTERN), validate_not_me)
+    )
+    email = models.EmailField(
+        max_length=EMAIL_FILED_LENGTH,
+        unique=True
+    )
     bio = models.TextField(
         'Биография',
         blank=True
@@ -30,7 +48,6 @@ class ExtendedUser(AbstractUser):
         default=DEFAULT_ROLE,
         blank=True,
     )
-    email = models.EmailField(max_length=EMAIL_FILED_LENGTH, unique=True)
     confirmation_code = models.CharField(
         max_length=CONFIRMATION_CODE_LENGTH,
         blank=True,

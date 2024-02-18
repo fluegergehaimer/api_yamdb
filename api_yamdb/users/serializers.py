@@ -3,13 +3,16 @@
 import re
 
 from django.contrib.auth import get_user_model
+from django.core.validators import RegexValidator
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.exceptions import ValidationError
 
 User = get_user_model()
 
 USERNAME_LENGTH = 150
+USERNAME_PATTERN = r'^[\w@.+-_]+$'
+EMAIL_FILED_LENGTH = 254
 CONFIRMATION_CODE_LENGTH = 16
 
 
@@ -42,31 +45,15 @@ class UserUpdateSerializer(UserUserUpdateSerializer):
         read_only_fields = ('role',)
 
 
-class RegistrationSerializer(serializers.ModelSerializer):
+class RegistrationSerializer(serializers.Serializer):
     """Сериализация регистрации и создания нового пользователя."""
 
-    class Meta:
-        """Отключение пред-валидации полей email и username."""
-
-        model = User
-        fields = ['email', 'username']
-        extra_kwargs = {
-            'email': {'validators': []},
-            'username': {'validators': []},
-        }
+    username = serializers.CharField(max_length=USERNAME_LENGTH)
+    email = serializers.EmailField(max_length=EMAIL_FILED_LENGTH)
 
     def validate(self, data):
         """Валидация данных для создания пользователя."""
         username = data.get('username', None)
-
-        if username == 'me':
-            raise serializers.ValidationError(
-                {
-                    'username': [
-                        'Использовать имя "me" в качестве username запрещено.'
-                    ]
-                }
-            )
 
         user_exists = User.objects.filter(username=username).first()
 
@@ -97,6 +84,16 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     def validate_username(self, username):
         """Валидауия поля username."""
+
+        if username == 'me':
+            raise serializers.ValidationError(
+                {
+                    'username': [
+                        'Использовать имя "me" в качестве username запрещено.'
+                    ]
+                }
+            )
+
         pattern = re.compile('^[\w.@+-]+\Z')
         if not pattern.findall(username):
             raise serializers.ValidationError(
@@ -109,8 +106,12 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
         return username
 
+    def create(self, validated_data):
+        """Создаёт пользователя."""
+        return User.objects.create_user(**validated_data)
 
-class AuthenticationSerializer(serializers.ModelSerializer):
+
+class AuthenticationSerializer(serializers.Serializer):
     """Сериализация проверки confirmation_code и отправки token."""
 
     username = serializers.CharField(
@@ -121,18 +122,6 @@ class AuthenticationSerializer(serializers.ModelSerializer):
         max_length=CONFIRMATION_CODE_LENGTH,
         required=True,
     )
-
-    class Meta:
-        """Meta-класс."""
-
-        model = User
-        fields = ['username', 'confirmation_code']
-
-    # def get_access_token(self, user):
-    #     """Генерирует JWT-токен."""
-    #     refresh = RefreshToken.for_user(user)
-    #     access_token = str(refresh.access_token)
-    #     return access_token
 
     def validate(self, data):
         """Валидация кода-подтверждения.
