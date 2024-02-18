@@ -5,6 +5,8 @@ from rest_framework import serializers
 
 from reviews.models import Category, Genre, GenreTitle, Title, Review, Comment
 
+MIN_RATING = 1
+MAX_RATING = 10
 
 class CategorySerializer(serializers.ModelSerializer):
     """Сериализатор категорий."""
@@ -37,7 +39,7 @@ class TitleSerializer(serializers.ModelSerializer):
         """Class Meta."""
 
         model = Title
-        fields = '__all__'
+        fields = ('id', 'category', 'genre', 'name', 'year', 'rating', 'description')
 
 
 class TitleCreateUpdateSerializer(serializers.ModelSerializer):
@@ -54,24 +56,24 @@ class TitleCreateUpdateSerializer(serializers.ModelSerializer):
         many=True,
         required=True
     )
-    description = serializers.CharField(required=False)
+    #description = serializers.CharField(required=False)
 
     class Meta:
         """Class Meta."""
 
         model = Title
-        fields = '__all__'
+        fields = ('id', 'name', 'year', 'genre', 'category', 'description')
         read_only_fields = ('rating',)
 
-    def create(self, validated_data):
-        """Create function."""
-        genres = validated_data.pop('genre')
-        title = Title.objects.create(**validated_data)
+    # def create(self, validated_data):
+    #     """Create function."""
+    #     genres = validated_data.pop('genre')
+    #     title = Title.objects.create(**validated_data)
 
-        for genre in genres:
-            genre = get_object_or_404(Genre, slug=genre.slug)
-            GenreTitle.objects.create(genre=genre, title=title)
-        return title
+    #     for genre in genres:
+    #         genre = get_object_or_404(Genre, slug=genre.slug)
+    #         GenreTitle.objects.create(genre=genre, title=title)
+    #     return title
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -85,8 +87,8 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     score = serializers.IntegerField(
         validators=[
-            MinValueValidator(1),
-            MaxValueValidator(10)
+            MinValueValidator(MIN_RATING),
+            MaxValueValidator(MAX_RATING)
         ]
     )
 

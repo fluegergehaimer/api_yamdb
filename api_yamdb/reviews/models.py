@@ -8,6 +8,8 @@ from users.models import User
 
 MESSAGE_1 = 'Оценка не может быть ниже 1.'
 MESSAGE_2 = 'Оценка не может быть выше 10.'
+NAME_MAX_LENGTH = 256
+SLUG_MAX_LENGTH = 50
 TEXT_LIMIT = 20
 
 
@@ -16,10 +18,11 @@ class NameSlugModel(models.Model):
 
     name = models.CharField(
         verbose_name='Название',
-        max_length=128,
+        max_length=NAME_MAX_LENGTH,
     )
     slug = models.SlugField(
         verbose_name='slug',
+        max_length=50,
         unique=True,
     )
 
@@ -60,7 +63,7 @@ class Title(models.Model):
 
     name = models.CharField(
         verbose_name='Название',
-        max_length=128,
+        max_length=NAME_MAX_LENGTH,
     )
     year = models.SmallIntegerField(
         verbose_name='Год',
