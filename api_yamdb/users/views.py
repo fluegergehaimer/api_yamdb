@@ -1,5 +1,6 @@
 """Модуль предвставлений для приложения users."""
 
+from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
@@ -10,10 +11,11 @@ from rest_framework.views import APIView
 
 
 from . import permissions
-from .models import User
 from .serializers import (
     AuthenticationSerializer, RegistrationSerializer, UserSerializer
 )
+
+User = get_user_model()
 
 
 class UserViewSet(viewsets.ModelViewSet):
