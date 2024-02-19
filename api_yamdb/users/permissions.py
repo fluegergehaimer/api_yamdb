@@ -2,6 +2,10 @@
 
 from rest_framework import permissions
 
+USER = 'user'
+MODERATOR = 'moderator'
+ADMIN = 'admin'
+
 
 class IsAdmin(permissions.BasePermission):
     """Пользователь - это admin или superamin django."""
@@ -9,12 +13,12 @@ class IsAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         """Пользователь - это admin или superamin django."""
         return request.user.is_authenticated and (
-            request.user.role == 'admin'
+            request.user.role == ADMIN
             or request.user.is_superuser
         )
 
 
-class IsAdminOrReadOnly(permissions.BasePermission):
+class IsAdminOrReadOnly(IsAdmin):
     """Пользователь - это admin. Если нет то только чтение."""
 
     def has_permission(self, request, view):
@@ -22,12 +26,13 @@ class IsAdminOrReadOnly(permissions.BasePermission):
         return (
             request.method in permissions.SAFE_METHODS or (
                 request.user.is_authenticated and (
-                    request.user.is_superuser or request.user.role == 'admin'
+                    super().has_permission(request, view)
                 )
             )
         )
 
 
+# Не знаю как исправить :(
 class IsAuthorModeratorAdminOrReadOnly(permissions.BasePermission):
     """Пользователь - это автор объекта либо moderator/admin."""
 
@@ -41,21 +46,3 @@ class IsAuthorModeratorAdminOrReadOnly(permissions.BasePermission):
                 or request.user.role in ('moderator', 'admin')
             )
         )
-
-
-class IsUserOrIsModeratorOrIsAdmin(permissions.BasePermission):
-    """Проверка прав.
-
-    Пользователь - это аутентифицированный пользователь,
-    модератор или админ.
-    """
-
-    def has_permission(self, request, view):
-        """Проверка прав.
-
-        Пользователь - это аутентифицированный пользователь,
-        модератор или админ.
-        """
-        return (request.user.role == 'user'
-                or request.user.role == 'moderator'
-                or request.user.role == 'admin')

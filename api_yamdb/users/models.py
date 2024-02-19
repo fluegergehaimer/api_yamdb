@@ -1,12 +1,17 @@
 """Модуль для переопределения модели User."""
 
-from random import choice
-
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import RegexValidator
 from django.db import models
+from rest_framework.exceptions import ValidationError
 
+USERNAME_LENGTH = 150
+USERNAME_PATTERN = r'^[\w@.+-_]+$'
 CONFIRMATION_CODE_LENGTH = 16
-CONFIRMATION_CODE_PATTERN = r"^[A-Za-z0-9]+$"
+ROLE_FIELD_LENGTH = 9
+EMAIL_FILED_LENGTH = 254
+
+DEFAULT_ROLE = 'user'
 
 CHOICES = (
     ('user', 'Обычный пользователь'),
@@ -15,24 +20,38 @@ CHOICES = (
 )
 
 
+def validate_not_me(value):
+    if value.lower() == 'me':
+        raise ValidationError('Username cannot be "me".')
+
+
 class ExtendedUser(AbstractUser):
     """Модель кастомного юзера."""
 
+    username = models.CharField(
+        max_length=USERNAME_LENGTH,
+        unique=True,
+        validators=(RegexValidator(regex=USERNAME_PATTERN), validate_not_me)
+    )
+    email = models.EmailField(
+        max_length=EMAIL_FILED_LENGTH,
+        unique=True
+    )
     bio = models.TextField(
         'Биография',
         blank=True
     )
     role = models.CharField(
         'Пользовательская роль',
-        max_length=16,
+        max_length=ROLE_FIELD_LENGTH,
         choices=CHOICES,
-        default='user',
+        default=DEFAULT_ROLE,
         blank=True,
     )
-    email = models.EmailField(max_length=254, unique=True)
     confirmation_code = models.CharField(
-        max_length=16,
+        max_length=CONFIRMATION_CODE_LENGTH,
         blank=True,
+        null=True,
     )
 
     USERNAME_FIELD = 'email'
@@ -43,22 +62,8 @@ class ExtendedUser(AbstractUser):
 
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ('id',)
+        ordering = ('username',)
 
     def __str__(self):
         """Возвращает email в качестве главного поля пользователя."""
         return self.email
-
-    def save(self, *args, **kwargs):
-        """Генерирует код-подтверждение и создаёт пользователя."""
-        if not self.confirmation_code:
-            self.confirmation_code = ''.join(choice(CONFIRMATION_CODE_PATTERN) for _ in range(CONFIRMATION_CODE_LENGTH))
-        super().save(*args, **kwargs)
-
-    def get_full_name(self):
-        """Для обработки электронной почты возвращаем username."""
-        return self.username
-
-    def get_short_name(self):
-        """Аналогично методу get_full_name()."""
-        return self.username

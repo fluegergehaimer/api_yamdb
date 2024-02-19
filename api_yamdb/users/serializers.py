@@ -3,16 +3,19 @@
 import re
 
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
+USERNAME_LENGTH = 150
+USERNAME_PATTERN = r'^[\w@.+-_]+$'
+EMAIL_FILED_LENGTH = 254
+CONFIRMATION_CODE_LENGTH = 16
 
-class UserSerializer(serializers.ModelSerializer):
-    """Сериалайзер для модели User."""
+
+class UserUserUpdateSerializer(serializers.ModelSerializer):
+    """Базовая модель сериалайзера для модели User."""
 
     class Meta:
         """Meta-класс."""
@@ -21,46 +24,34 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             'username', 'email', 'first_name', 'last_name', 'bio', 'role',
         )
+        abstract = True
 
 
-class UserUpdateSerializer(serializers.ModelSerializer):
+class UserSerializer(UserUserUpdateSerializer):
+    """Сериалайзер для модели User."""
+
+    class Meta(UserUserUpdateSerializer.Meta):
+        """Meta-класс."""
+
+
+class UserUpdateSerializer(UserUserUpdateSerializer):
     """Для PATCH запроса к api/v1/users/me/."""
 
-    class Meta:
+    class Meta(UserUserUpdateSerializer.Meta):
         """Отключает запись в поле role."""
 
-        model = User
-        fields = (
-            'username', 'email', 'first_name', 'last_name', 'bio', 'role',
-        )
         read_only_fields = ('role',)
 
 
-class RegistrationSerializer(serializers.ModelSerializer):
+class RegistrationSerializer(serializers.Serializer):
     """Сериализация регистрации и создания нового пользователя."""
 
-    class Meta:
-        """Отключение пред-валидации полей email и username."""
-
-        model = User
-        fields = ['email', 'username']
-        extra_kwargs = {
-            'email': {'validators': []},
-            'username': {'validators': []},
-        }
+    username = serializers.CharField(max_length=USERNAME_LENGTH)
+    email = serializers.EmailField(max_length=EMAIL_FILED_LENGTH)
 
     def validate(self, data):
         """Валидация данных для создания пользователя."""
         username = data.get('username', None)
-
-        if username == 'me':
-            raise serializers.ValidationError(
-                {
-                    'username': [
-                        'Использовать имя "me" в качестве username запрещено.'
-                    ]
-                }
-            )
 
         user_exists = User.objects.filter(username=username).first()
 
@@ -74,8 +65,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
                     }
                 )
 
-            self.send_success_email(user_exists)
-            data['is_user_exist'] = True
             return data
 
         # Если пользователя нет в базе - проверяем не занят ли email
@@ -93,7 +82,21 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     def validate_username(self, username):
         """Валидауия поля username."""
-        pattern = re.compile('^[\w.@+-]+\Z')
+
+        if username == 'me':
+            raise serializers.ValidationError(
+                {
+                    'username': [
+                        'Использовать имя "me" в качестве username запрещено.'
+                    ]
+                }
+            )
+
+        #  Мало!
+        #  Такое сообщение умеет делать штатный Джанго валидатор регулярок. Для такого свой не нужен.
+        #  У своего сделайте сообщение полезнее.
+        #  Пусть он перечислит (по одному разу) все недопустимые символы, найденные в нике.
+        pattern = re.compile(USERNAME_PATTERN)
         if not pattern.findall(username):
             raise serializers.ValidationError(
                 {
@@ -107,40 +110,20 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Создаёт пользователя."""
-        new_user = User.objects.create_user(**validated_data)
-        self.send_success_email(new_user)
-        return new_user
-
-    def send_success_email(self, user):
-        """Отправляет email с кодом подтверждения."""
-        send_mail(
-            subject='Регистрация',
-            message=f'Поздравляем! '
-                    f'Пользоваетель {user.get_full_name()} зарегистрирован.'
-                    f'Ваш confirmation_code: {user.confirmation_code}',
-            from_email='from@example.com',
-            recipient_list=[user.email],
-            fail_silently=True,
-        )
+        return User.objects.create_user(**validated_data)
 
 
-class AuthenticationSerializer(serializers.ModelSerializer):
+class AuthenticationSerializer(serializers.Serializer):
     """Сериализация проверки confirmation_code и отправки token."""
 
-    username = serializers.CharField()
-    confirmation_code = serializers.CharField()
-
-    class Meta:
-        """Meta-класс."""
-
-        model = User
-        fields = ['username', 'confirmation_code']
-
-    def get_access_token(self, user):
-        """Генерирует JWT-токен."""
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
-        return access_token
+    username = serializers.CharField(
+        max_length=USERNAME_LENGTH,
+        required=True
+    )
+    confirmation_code = serializers.CharField(
+        max_length=CONFIRMATION_CODE_LENGTH,
+        required=True,
+    )
 
     def validate(self, data):
         """Валидация кода-подтверждения.
@@ -155,11 +138,4 @@ class AuthenticationSerializer(serializers.ModelSerializer):
                 'Отсутствует обязательное поле или оно некорректно'
             )
 
-        access_token = self.get_access_token(user)
-
-        data['token'] = access_token
         return data
-
-    def to_representation(self, instance):
-        """Переопределен для возврата только токена."""
-        return {'token': instance['token']}
