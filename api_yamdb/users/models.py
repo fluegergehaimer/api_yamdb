@@ -8,7 +8,7 @@ from rest_framework.exceptions import ValidationError
 USERNAME_LENGTH = 150
 USERNAME_PATTERN = r'^[\w@.+-_]+$'
 CONFIRMATION_CODE_LENGTH = 16
-ROLE_FIELD_LENGTH = 16
+ROLE_FIELD_LENGTH = 9
 EMAIL_FILED_LENGTH = 254
 
 DEFAULT_ROLE = 'user'

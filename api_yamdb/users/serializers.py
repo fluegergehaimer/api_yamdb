@@ -3,10 +3,8 @@
 import re
 
 from django.contrib.auth import get_user_model
-from django.core.validators import RegexValidator
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
 User = get_user_model()
 
@@ -94,7 +92,11 @@ class RegistrationSerializer(serializers.Serializer):
                 }
             )
 
-        pattern = re.compile('^[\w.@+-]+\Z')
+        #  Мало!
+        #  Такое сообщение умеет делать штатный Джанго валидатор регулярок. Для такого свой не нужен.
+        #  У своего сделайте сообщение полезнее.
+        #  Пусть он перечислит (по одному разу) все недопустимые символы, найденные в нике.
+        pattern = re.compile(USERNAME_PATTERN)
         if not pattern.findall(username):
             raise serializers.ValidationError(
                 {

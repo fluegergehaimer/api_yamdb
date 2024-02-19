@@ -91,6 +91,7 @@ class RegistrationAPIView(APIView):
         if not user_exists.first():
             serializer.save(confirmation_code=get_confirmation_code())
         else:
+            #  PIN обновляется
             user_exists.update(confirmation_code=get_confirmation_code())
 
         send_success_email(user_exists.first())
@@ -119,6 +120,7 @@ class AuthenticationAPIView(APIView):
         """
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
+        #  PIN удаляется для невозможности использовать его ещё раз
         self.get_user().update(confirmation_code=None)
 
         return Response({
