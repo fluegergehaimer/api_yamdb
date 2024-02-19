@@ -1,14 +1,12 @@
 """Модели."""
 
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
+from django.core.validators import (MinValueValidator,
+                                    MaxValueValidator,
+                                    RegexValidator)
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
-
-#User = get_user_model()
-
 
 MESSAGE_1 = 'Оценка не может быть ниже 1.'
 MESSAGE_2 = 'Оценка не может быть выше 10.'
@@ -23,20 +21,21 @@ EMAIL_FIELD_LENGTH = 254
 
 DEFAULT_ROLE = 'user'
 
-CHOICES = (
-    ('user', 'Обычный пользователь'),
-    ('moderator', 'Модератор'),
-    ('admin', 'Администратор'),
-)
-
 
 def validate_not_me(value):
+    """Функция-валидатор. Проверяет, что username != me."""
     if value.lower() == 'me':
         raise ValidationError('Username cannot be "me".')
 
 
 class User(AbstractUser):
     """Модель кастомного юзера."""
+
+    CHOICES = (
+        ('user', 'Обычный пользователь'),
+        ('moderator', 'Модератор'),
+        ('admin', 'Администратор'),
+    )
 
     username = models.CharField(
         max_length=USERNAME_LENGTH,

@@ -1,4 +1,5 @@
 """Api urls."""
+
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
@@ -51,11 +52,9 @@ urlpatterns = [
 ]
 
 
-
 ###
 # from django.urls import include, path
 # from rest_framework import routers
-
 
 
 # app_name = 'users'

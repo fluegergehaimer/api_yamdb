@@ -1,4 +1,5 @@
 """Views."""
+
 from random import choice
 
 from django.core.mail import send_mail
@@ -7,7 +8,9 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (AllowAny,
+                                        IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
@@ -19,41 +22,22 @@ from api.serializers import (
     TitleCreateUpdateSerializer, TitleSerializer,
 )
 from reviews.models import Category, Genre, Review, Title, User
-#from users import permissions
 from . import permissions
 from .serializers import (AuthenticationSerializer,
                           RegistrationSerializer,
                           UserSerializer,
                           UserUpdateSerializer)
 
-"""Модуль предвставлений для приложения users."""
-
-
-
-#from django.contrib.auth import get_user_model
-#from django.shortcuts import get_object_or_404
-#from django_filters.rest_framework import DjangoFilterBackend
-#from rest_framework import filters, status, viewsets
-# from rest_framework.decorators import action
-# from rest_framework.permissions import AllowAny, IsAuthenticated
-
-
-# from . import permissions
-# from .serializers import (AuthenticationSerializer,
-#                           RegistrationSerializer,
-#                           UserSerializer,
-#                           UserUpdateSerializer)
-
 HTTP_METHODS = ('get', 'post', 'patch', 'delete')
-CONFIRMATION_CODE_LENGTH = 16
-CONFIRMATION_CODE_PATTERN = r'^[A-Za-z0-9]+$'
+CONF_CODE_LENGTH = 16
+CONF_CODE_PATTERN = r'^[A-Za-z0-9]+$'
 SERVER_EMAIL = 'from@example.com'
 
 
 class CategoryGenreMixin(mixins.ListModelMixin,
-                               mixins.CreateModelMixin,
-                               mixins.DestroyModelMixin,
-                               viewsets.GenericViewSet):
+                         mixins.CreateModelMixin,
+                         mixins.DestroyModelMixin,
+                         viewsets.GenericViewSet):
     """Базовый класс."""
 
     permission_classes = (permissions.IsAdminOrReadOnly,)
@@ -108,6 +92,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     http_method_names = HTTP_METHODS
 
     def get_title(self):
+        """Возвращает объетк произведения."""
         return get_object_or_404(Title, pk=self.kwargs.get('title_id'))
 
     def get_queryset(self):
@@ -131,6 +116,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     http_method_names = HTTP_METHODS
 
     def get_review(self):
+        """Возвращает объект отзыва."""
         return get_object_or_404(
             Review,
             id=self.kwargs.get('review_id'),
@@ -146,10 +132,10 @@ class CommentViewSet(viewsets.ModelViewSet):
         return self.get_review().comments.all()
 
 
-
 def get_confirmation_code():
+    """Функция генерации ПИН."""
     return ''.join(
-        choice(CONFIRMATION_CODE_PATTERN) for _ in range(CONFIRMATION_CODE_LENGTH)
+        choice(CONF_CODE_PATTERN) for _ in range(CONF_CODE_LENGTH)
     )
 
 
@@ -185,20 +171,35 @@ class UserViewSet(viewsets.ModelViewSet):
         """Обрабатывает GET И PATCH запросы к api/v1/users/me."""
         if request.method == 'GET':
             return Response(UserSerializer(request.user).data)
-        serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
+        serializer = UserUpdateSerializer(
+            request.user,
+            data=request.data,
+            partial=True
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class RegistrationAPIView(APIView):
-    """Вьюсет для регистрации пользователей."""
+class RegistrationAuthenticationAPIView(APIView):
+    """Базовый класс."""
 
-    serializer_class = RegistrationSerializer
     permission_classes = (AllowAny,)
 
     def get_user(self):
+        """Получает queryset с объектом пользователя."""
         return User.objects.filter(username=self.request.data.get('username'))
+
+    class Meta:
+        """Meta-класс."""
+
+        abstract = True
+
+
+class RegistrationAPIView(RegistrationAuthenticationAPIView):
+    """Вьюсет для регистрации пользователей."""
+
+    serializer_class = RegistrationSerializer
 
     def post(self, request):
         """Обрабатывает POST запросы к api/v1/auth/signup/.
@@ -219,14 +220,10 @@ class RegistrationAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class AuthenticationAPIView(APIView):
+class AuthenticationAPIView(RegistrationAuthenticationAPIView):
     """Вьюсет для аутентификации пользователей по коду подтверждения."""
 
     serializer_class = AuthenticationSerializer
-    permission_classes = (AllowAny,)
-
-    def get_user(self):
-        return User.objects.filter(username=self.request.data.get('username'))
 
     def get_access_token(self, user):
         """Генерирует JWT-токен."""
