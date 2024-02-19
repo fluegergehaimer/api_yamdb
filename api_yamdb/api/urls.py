@@ -35,7 +35,11 @@ router_v1.register(
     views.TitlesViewSet,
     basename='titles'
 )
-router_v1.register(r'users', views.UserViewSet, basename='users',)
+router_v1.register(
+    r'users',
+    views.UserViewSet,
+    basename='users',
+)
 
 signup_urls = [
     path(
@@ -47,30 +51,11 @@ signup_urls = [
         'v1/auth/token/',
         views.AuthenticationAPIView.as_view(),
         name='token'
-    )
+    ),
 ]
 
-<<<<<<< HEAD
-
-###
-# from django.urls import include, path
-# from rest_framework import routers
-
-
-# app_name = 'users'
-
-# router_v1 = routers.DefaultRouter()
-# router_v1.register(r'', UserViewSet, basename='users',)
-
-# urlpatterns = [
-#     path('v1/auth/signup/', RegistrationAPIView.as_view(), name='signup'),
-#     path('v1/auth/token/', AuthenticationAPIView.as_view(), name='token'),
-#     path('v1/users/', include(router_v1.urls)),
-#     path('', include('api.urls')),
-# ]
-=======
 urlpatterns = [
-    path('v1/', include(signup_urls)),
     path('v1/', include(router_v1.urls)),
 ]
->>>>>>> 1434d6ab2270f1c3fc1c49279ca16f4e943973fd
+
+urlpatterns += signup_urls
