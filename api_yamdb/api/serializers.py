@@ -1,16 +1,12 @@
 """Сериалайзеры."""
+
 import re
 
-from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from reviews.models import Category, Genre, Title, Review, Comment, User
-
-
-
-#User = get_user_model()
 
 USERNAME_LENGTH = 150
 USERNAME_PATTERN = r'^[\w@.+-_]+$'
@@ -18,6 +14,7 @@ EMAIL_FILED_LENGTH = 254
 CONFIRMATION_CODE_LENGTH = 16
 MIN_RATING = 1
 MAX_RATING = 10
+
 
 class CategorySerializer(serializers.ModelSerializer):
     """Сериализатор категорий."""
@@ -50,7 +47,8 @@ class TitleSerializer(serializers.ModelSerializer):
         """Class Meta."""
 
         model = Title
-        fields = ('id', 'category', 'genre', 'name', 'year', 'rating', 'description')
+        fields = ('id', 'category', 'genre', 'name',
+                  'year', 'rating', 'description')
 
 
 class TitleCreateUpdateSerializer(serializers.ModelSerializer):
@@ -126,6 +124,7 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('id', 'text', 'author', 'pub_date')
 
+
 class UserUserUpdateSerializer(serializers.ModelSerializer):
     """Базовая модель сериалайзера для модели User."""
 
@@ -194,7 +193,6 @@ class RegistrationSerializer(serializers.Serializer):
 
     def validate_username(self, username):
         """Валидауия поля username."""
-
         if username == 'me':
             raise serializers.ValidationError(
                 {
@@ -204,16 +202,16 @@ class RegistrationSerializer(serializers.Serializer):
                 }
             )
 
-        #  Мало!
-        #  Такое сообщение умеет делать штатный Джанго валидатор регулярок. Для такого свой не нужен.
-        #  У своего сделайте сообщение полезнее.
-        #  Пусть он перечислит (по одному разу) все недопустимые символы, найденные в нике.
-        pattern = re.compile(USERNAME_PATTERN)
-        if not pattern.findall(username):
+        invalid_characters = []
+        for char in username:
+            if not re.search(USERNAME_PATTERN, char):
+                invalid_characters.append(char)
+        if invalid_characters:
             raise serializers.ValidationError(
                 {
                     'username': [
-                        'username не соответствует паттерну.'
+                        f'Недопустимые символы в username: '
+                        f'{", ".join(invalid_characters)}'
                     ]
                 }
             )
