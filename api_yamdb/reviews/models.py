@@ -32,9 +32,9 @@ class User(AbstractUser):
     """Модель кастомного юзера."""
 
     CHOICES = (
-        ('user', 'Обычный пользователь'),
+        ('user', 'Пользователь'),
         ('moderator', 'Модератор'),
-        ('admin', 'Администратор'),
+        ('admin', 'Админ'),
     )
 
     username = models.CharField(
@@ -133,7 +133,7 @@ class Title(models.Model):
     year = models.SmallIntegerField(
         verbose_name='Год',
         validators=[
-            MinValueValidator(1888),
+            MinValueValidator(1500),
             MaxValueValidator(timezone.now().year),
         ]
     )

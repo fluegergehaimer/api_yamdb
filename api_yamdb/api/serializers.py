@@ -49,6 +49,7 @@ class TitleSerializer(serializers.ModelSerializer):
         model = Title
         fields = ('id', 'category', 'genre', 'name',
                   'year', 'rating', 'description')
+        read_only_fields = ('id',)
 
 
 class TitleCreateUpdateSerializer(serializers.ModelSerializer):
