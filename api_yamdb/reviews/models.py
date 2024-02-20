@@ -1,14 +1,81 @@
 """Модели."""
-from django.core.validators import MinValueValidator, MaxValueValidator
+
+from django.contrib.auth.models import AbstractUser
+from django.core.validators import (MinValueValidator,
+                                    MaxValueValidator,
+                                    RegexValidator)
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from users.models import User
-
-
 MESSAGE_1 = 'Оценка не может быть ниже 1.'
 MESSAGE_2 = 'Оценка не может быть выше 10.'
+NAME_MAX_LENGTH = 256
+SLUG_MAX_LENGTH = 50
 TEXT_LIMIT = 20
+USERNAME_LENGTH = 150
+USERNAME_PATTERN = r'^[\w@.+-_]+$'
+CONFIRMATION_CODE_LENGTH = 16
+ROLE_FIELD_LENGTH = 9
+EMAIL_FIELD_LENGTH = 254
+
+DEFAULT_ROLE = 'user'
+
+
+def validate_not_me(value):
+    """Функция-валидатор. Проверяет, что username != me."""
+    if value.lower() == 'me':
+        raise ValidationError('Username cannot be "me".')
+
+
+class User(AbstractUser):
+    """Модель кастомного юзера."""
+
+    CHOICES = (
+        ('user', 'Пользователь'),
+        ('moderator', 'Модератор'),
+        ('admin', 'Админ'),
+    )
+
+    username = models.CharField(
+        max_length=USERNAME_LENGTH,
+        unique=True,
+        validators=(RegexValidator(regex=USERNAME_PATTERN), validate_not_me)
+    )
+    email = models.EmailField(
+        max_length=EMAIL_FIELD_LENGTH,
+        unique=True
+    )
+    bio = models.TextField(
+        'Биография',
+        blank=True
+    )
+    role = models.CharField(
+        'Пользовательская роль',
+        max_length=ROLE_FIELD_LENGTH,
+        choices=CHOICES,
+        default=DEFAULT_ROLE,
+        blank=True,
+    )
+    confirmation_code = models.CharField(
+        max_length=CONFIRMATION_CODE_LENGTH,
+        blank=True,
+        null=True,
+    )
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+
+    class Meta:
+        """Meta-клас. Задаёт сортировку по полю id."""
+
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+        ordering = ('username',)
+
+    def __str__(self):
+        """Возвращает email в качестве главного поля пользователя."""
+        return self.email
 
 
 class NameSlugModel(models.Model):
@@ -16,10 +83,11 @@ class NameSlugModel(models.Model):
 
     name = models.CharField(
         verbose_name='Название',
-        max_length=128,
+        max_length=NAME_MAX_LENGTH,
     )
     slug = models.SlugField(
         verbose_name='slug',
+        max_length=50,
         unique=True,
     )
 
@@ -60,12 +128,12 @@ class Title(models.Model):
 
     name = models.CharField(
         verbose_name='Название',
-        max_length=128,
+        max_length=NAME_MAX_LENGTH,
     )
     year = models.SmallIntegerField(
         verbose_name='Год',
         validators=[
-            MinValueValidator(1888),
+            MinValueValidator(1500),
             MaxValueValidator(timezone.now().year),
         ]
     )
