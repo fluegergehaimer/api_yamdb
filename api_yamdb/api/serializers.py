@@ -1,12 +1,12 @@
 """Сериалайзеры."""
 
-import re
+#import re
 
 from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework import serializers
 
 from config import (MIN_RATING, MAX_RATING,
-                    USERNAME_LENGTH, EMAIL_FILED_LENGTH,
+                    USERNAME_LENGTH, EMAIL_FIELD_LENGTH,
                     CONF_CODE_LENGTH)
 from reviews.models import Category, Genre, Title, Review, Comment, User
 from reviews.validators import (validate_confirmation_code,
@@ -45,9 +45,14 @@ class TitleSerializer(serializers.ModelSerializer):
         """Class Meta."""
 
         model = Title
-        fields = ('id', 'category', 'genre', 'name',
-                  'year', 'rating', 'description')
-        read_only_fields = ('id',)
+        fields = (
+            'id', 'category', 'genre', 'name',
+            'year', 'rating', 'description'
+        )
+        read_only_fields = (
+            'category', 'genre', 'name',
+            'year', 'rating', 'description'
+        )
 
 
 class TitleCreateUpdateSerializer(serializers.ModelSerializer):
@@ -70,7 +75,6 @@ class TitleCreateUpdateSerializer(serializers.ModelSerializer):
 
         model = Title
         fields = ('id', 'name', 'year', 'genre', 'category', 'description')
-        read_only_fields = ('rating',)
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -154,7 +158,7 @@ class SignUPSerializer(serializers.Serializer):
         validators=(validate_not_me, validate_username_via_regex)
     )
     email = serializers.EmailField(
-        max_length=EMAIL_FILED_LENGTH,
+        max_length=EMAIL_FIELD_LENGTH,
         required=True
     )
 
@@ -164,7 +168,8 @@ class TokenSerializer(serializers.Serializer):
 
     username = serializers.CharField(
         max_length=USERNAME_LENGTH,
-        required=True
+        required=True,
+        validators=(validate_not_me, validate_username_via_regex)
     )
     confirmation_code = serializers.CharField(
         max_length=CONF_CODE_LENGTH,
