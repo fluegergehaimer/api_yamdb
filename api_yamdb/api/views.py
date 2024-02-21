@@ -1,12 +1,13 @@
 """Views."""
 
-from random import choice
+import random
+import string
 
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, status, viewsets
+from rest_framework import filters, mixins, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (AllowAny,
                                         IsAuthenticated,
@@ -21,17 +22,16 @@ from api.serializers import (
     GenreSerializer, ReviewSerializer,
     TitleCreateUpdateSerializer, TitleSerializer,
 )
+from config import SERVER_EMAIL, URL_PROFILE_PREF, NOT_APPLICABLE
 from reviews.models import Category, Genre, Review, Title, User
 from . import permissions
-from .serializers import (AuthenticationSerializer,
-                          RegistrationSerializer,
+from .serializers import (SignUPSerializer,
+                          TokenSerializer,
                           UserSerializer,
                           UserUpdateSerializer)
 
 HTTP_METHODS = ('get', 'post', 'patch', 'delete')
 CONF_CODE_LENGTH = 16
-CONF_CODE_PATTERN = r'^[A-Za-z0-9]+$'
-SERVER_EMAIL = 'from@example.com'
 
 
 class CategoryGenreMixin(mixins.ListModelMixin,
@@ -132,18 +132,11 @@ class CommentViewSet(viewsets.ModelViewSet):
         return self.get_review().comments.all()
 
 
-def get_confirmation_code():
-    """Функция генерации ПИН."""
-    return ''.join(
-        choice(CONF_CODE_PATTERN) for _ in range(CONF_CODE_LENGTH)
-    )
-
-
-def send_success_email(user):
+def send_success_email(user, confirmation_code):
     """Отправляет email с кодом подтверждения."""
     send_mail(
         subject='Регистрация',
-        message=f'Ваш confirmation_code: {user.confirmation_code}',
+        message=f'Ваш confirmation_code: {confirmation_code}',
         from_email=SERVER_EMAIL,
         recipient_list=[user.email],
         fail_silently=True,
@@ -165,9 +158,9 @@ class UserViewSet(viewsets.ModelViewSet):
         detail=False,
         methods=('get', 'patch'),
         permission_classes=(IsAuthenticated,),
-        url_path='me',
+        url_path=URL_PROFILE_PREF,
     )
-    def go_users_profile(self, request):
+    def get_users_profile(self, request):
         """Обрабатывает GET И PATCH запросы к api/v1/users/me."""
         if request.method == 'GET':
             return Response(UserSerializer(request.user).data)
@@ -181,25 +174,11 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class RegistrationAuthenticationAPIView(APIView):
-    """Базовый класс."""
-
-    permission_classes = (AllowAny,)
-
-    def get_user(self):
-        """Получает queryset с объектом пользователя."""
-        return User.objects.filter(username=self.request.data.get('username'))
-
-    class Meta:
-        """Meta-класс."""
-
-        abstract = True
-
-
-class RegistrationAPIView(RegistrationAuthenticationAPIView):
+class SignUPAPIView(APIView):
     """Вьюсет для регистрации пользователей."""
 
-    serializer_class = RegistrationSerializer
+    serializer_class = SignUPSerializer
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         """Обрабатывает POST запросы к api/v1/auth/signup/.
@@ -208,28 +187,30 @@ class RegistrationAPIView(RegistrationAuthenticationAPIView):
         """
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user_exists = self.get_user()
 
-        if not user_exists.first():
-            serializer.save(confirmation_code=get_confirmation_code())
-        else:
-            #  PIN обновляется
-            user_exists.update(confirmation_code=get_confirmation_code())
+        username = request.data.get("username")
+        email = request.data.get("email")
 
-        send_success_email(user_exists.first())
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            user_1, status1 = User.objects.get_or_create(username=username, email=email)
+            confirmation_code = ''.join(random.choices(string.ascii_letters + string.digits, k=CONF_CODE_LENGTH))
+            User.objects.filter(username=username).update(confirmation_code=confirmation_code)
+            send_success_email(user_1, confirmation_code)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            raise serializers.ValidationError(
+                            {
+                                e
+                            }
+                        )
 
 
-class AuthenticationAPIView(RegistrationAuthenticationAPIView):
+class TokenAPIView(APIView):
     """Вьюсет для аутентификации пользователей по коду подтверждения."""
 
-    serializer_class = AuthenticationSerializer
-
-    def get_access_token(self, user):
-        """Генерирует JWT-токен."""
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
-        return access_token
+    serializer_class = TokenSerializer
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         """Обрабатывает POST запросы к api/v1/auth/token/.
@@ -238,11 +219,19 @@ class AuthenticationAPIView(RegistrationAuthenticationAPIView):
         """
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        #  PIN удаляется для невозможности использовать его ещё раз
-        self.get_user().update(confirmation_code=None)
+
+        username = request.data.get("username")
+
+        user = get_object_or_404(User, username=username)
+        if request.data.get('confirmation_code') != user.confirmation_code:
+            raise serializers.ValidationError(
+                'Отсутствует обязательное поле или оно некорректно'
+            )
+
+        User.objects.filter(username=username).update(confirmation_code=NOT_APPLICABLE)
 
         return Response({
-            'token': self.get_access_token(self.get_user().first())
+            'token': str(RefreshToken.for_user(user).access_token)
         },
             status=status.HTTP_200_OK
         )
