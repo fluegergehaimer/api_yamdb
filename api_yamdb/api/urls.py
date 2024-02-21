@@ -41,21 +41,12 @@ router_v1.register(
     basename='users',
 )
 
-signup_urls = [
-    path(
-        'v1/auth/signup/',
-        views.RegistrationAPIView.as_view(),
-        name='signup'
-    ),
-    path(
-        'v1/auth/token/',
-        views.AuthenticationAPIView.as_view(),
-        name='token'
-    ),
-]
-
 urlpatterns = [
+    path('v1/auth/', include(
+        [
+            path('signup/', views.SignUPAPIView.as_view()),
+            path('token/', views.TokenAPIView.as_view()),
+        ]
+    )),
     path('v1/', include(router_v1.urls)),
 ]
-
-urlpatterns += signup_urls

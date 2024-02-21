@@ -3,17 +3,15 @@
 import re
 
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
+from config import (MIN_RATING, MAX_RATING,
+                    USERNAME_LENGTH, EMAIL_FILED_LENGTH,
+                    CONF_CODE_LENGTH)
 from reviews.models import Category, Genre, Title, Review, Comment, User
-
-USERNAME_LENGTH = 150
-USERNAME_PATTERN = r'^[\w@.+-_]+$'
-EMAIL_FILED_LENGTH = 254
-CONFIRMATION_CODE_LENGTH = 16
-MIN_RATING = 1
-MAX_RATING = 10
+from reviews.validators import (validate_confirmation_code,
+                                validate_not_me,
+                                validate_username_via_regex)
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -126,7 +124,7 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ('id', 'text', 'author', 'pub_date')
 
 
-class UserUserUpdateSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     """Базовая модель сериалайзера для модели User."""
 
     class Meta:
@@ -136,95 +134,32 @@ class UserUserUpdateSerializer(serializers.ModelSerializer):
         fields = (
             'username', 'email', 'first_name', 'last_name', 'bio', 'role',
         )
-        abstract = True
 
 
-class UserSerializer(UserUserUpdateSerializer):
-    """Сериалайзер для модели User."""
-
-    class Meta(UserUserUpdateSerializer.Meta):
-        """Meta-класс."""
-
-
-class UserUpdateSerializer(UserUserUpdateSerializer):
+class UserUpdateSerializer(UserSerializer):
     """Для PATCH запроса к api/v1/users/me/."""
 
-    class Meta(UserUserUpdateSerializer.Meta):
+    class Meta(UserSerializer.Meta):
         """Отключает запись в поле role."""
 
         read_only_fields = ('role',)
 
 
-class RegistrationSerializer(serializers.Serializer):
+class SignUPSerializer(serializers.Serializer):
     """Сериализация регистрации и создания нового пользователя."""
 
-    username = serializers.CharField(max_length=USERNAME_LENGTH)
-    email = serializers.EmailField(max_length=EMAIL_FILED_LENGTH)
-
-    def validate(self, data):
-        """Валидация данных для создания пользователя."""
-        username = data.get('username', None)
-
-        user_exists = User.objects.filter(username=username).first()
-
-        if user_exists:
-            if data.get('email') != user_exists.email:
-                raise serializers.ValidationError(
-                    {
-                        'email': [
-                            'Нельзя изменить почту.'
-                        ]
-                    }
-                )
-
-            return data
-
-        # Если пользователя нет в базе - проверяем не занят ли email
-        email = data.get('email', None)
-        if User.objects.filter(email=email):
-            raise serializers.ValidationError(
-                {
-                    'email': [
-                        'email уже используется.'
-                    ]
-                }
-            )
-
-        return data
-
-    def validate_username(self, username):
-        """Валидауия поля username."""
-        if username == 'me':
-            raise serializers.ValidationError(
-                {
-                    'username': [
-                        'Использовать имя "me" в качестве username запрещено.'
-                    ]
-                }
-            )
-
-        invalid_characters = []
-        for char in username:
-            if not re.search(USERNAME_PATTERN, char):
-                invalid_characters.append(char)
-        if invalid_characters:
-            raise serializers.ValidationError(
-                {
-                    'username': [
-                        f'Недопустимые символы в username: '
-                        f'{", ".join(invalid_characters)}'
-                    ]
-                }
-            )
-
-        return username
-
-    def create(self, validated_data):
-        """Создаёт пользователя."""
-        return User.objects.create_user(**validated_data)
+    username = serializers.CharField(
+        max_length=USERNAME_LENGTH,
+        required=True,
+        validators=(validate_not_me, validate_username_via_regex)
+    )
+    email = serializers.EmailField(
+        max_length=EMAIL_FILED_LENGTH,
+        required=True
+    )
 
 
-class AuthenticationSerializer(serializers.Serializer):
+class TokenSerializer(serializers.Serializer):
     """Сериализация проверки confirmation_code и отправки token."""
 
     username = serializers.CharField(
@@ -232,21 +167,7 @@ class AuthenticationSerializer(serializers.Serializer):
         required=True
     )
     confirmation_code = serializers.CharField(
-        max_length=CONFIRMATION_CODE_LENGTH,
+        max_length=CONF_CODE_LENGTH,
         required=True,
+        validators=(validate_confirmation_code,)
     )
-
-    def validate(self, data):
-        """Валидация кода-подтверждения.
-
-        Если код валиден - в словарь data добавляется JWT-токен.
-        """
-        user = get_object_or_404(User, username=data.get('username'))
-        confirmation_code = data.get('confirmation_code')
-
-        if confirmation_code != user.confirmation_code:
-            raise serializers.ValidationError(
-                'Отсутствует обязательное поле или оно некорректно'
-            )
-
-        return data
