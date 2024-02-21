@@ -7,9 +7,11 @@ from rest_framework import serializers
 
 from config import (MIN_RATING, MAX_RATING,
                     USERNAME_LENGTH, EMAIL_FILED_LENGTH,
-                    URL_PROFILE_PREF, USERNAME_PATTERN,
-                    NOT_APPLICABLE, CONF_CODE_LENGTH)
+                    CONF_CODE_LENGTH)
 from reviews.models import Category, Genre, Title, Review, Comment, User
+from reviews.validators import (validate_confirmation_code,
+                                validate_not_me,
+                                validate_username_via_regex)
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -148,42 +150,13 @@ class SignUPSerializer(serializers.Serializer):
 
     username = serializers.CharField(
         max_length=USERNAME_LENGTH,
-        required=True
+        required=True,
+        validators=(validate_not_me, validate_username_via_regex)
     )
     email = serializers.EmailField(
         max_length=EMAIL_FILED_LENGTH,
         required=True
     )
-
-    def validate_username(self, username):
-        """Валидауия поля username."""
-        if username == URL_PROFILE_PREF:
-            raise serializers.ValidationError(
-                {
-                    'username': [
-                        f'Использовать имя "{URL_PROFILE_PREF}" в качестве username запрещено.'
-                    ]
-                }
-            )
-
-        # invalid_characters = re.findall(f'[^{pattern}]', input_string)
-
-
-        invalid_characters = []
-        for char in username:
-            if not re.search(USERNAME_PATTERN, char):
-                invalid_characters.append(char)
-        if invalid_characters:
-            raise serializers.ValidationError(
-                {
-                    'username': [
-                        f'Недопустимые символы в username: '
-                        f'{", ".join(invalid_characters)}'
-                    ]
-                }
-            )
-
-        return username
 
 
 class TokenSerializer(serializers.Serializer):
@@ -196,13 +169,5 @@ class TokenSerializer(serializers.Serializer):
     confirmation_code = serializers.CharField(
         max_length=CONF_CODE_LENGTH,
         required=True,
+        validators=(validate_confirmation_code,)
     )
-
-    def validate_confirmation_code(self, confirmation_code):
-        """Валидауия поля username."""
-        if confirmation_code == NOT_APPLICABLE:
-            raise serializers.ValidationError(
-                {
-                    "Отсутствует обязательное поле или оно некорректно"
-                }
-            )

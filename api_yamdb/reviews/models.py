@@ -4,13 +4,12 @@ import re
 
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import (MinValueValidator,
-                                    MaxValueValidator,
-                                    RegexValidator)
-from django.core.exceptions import ValidationError
+                                    MaxValueValidator)
 from django.db import models
 from django.utils import timezone
 
-from config import DEFAULT_ROLE, URL_PROFILE_PREF, USER, MODERATOR, ADMIN, USERNAME_PATTERN
+from config import DEFAULT_ROLE, USER, MODERATOR, ADMIN
+from reviews.validators import validate_not_me, validate_username_via_regex
 
 MESSAGE_1 = 'Оценка не может быть ниже 1.'
 MESSAGE_2 = 'Оценка не может быть выше 10.'
@@ -21,31 +20,6 @@ USERNAME_LENGTH = 150
 CONFIRMATION_CODE_LENGTH = 16
 ROLE_FIELD_LENGTH = 9
 EMAIL_FIELD_LENGTH = 254
-
-
-def validate_not_me(value):
-    """Функция-валидатор. Проверяет, что username != me."""
-    if value == URL_PROFILE_PREF:
-        raise ValidationError(
-                {
-                    'username': [
-                        f'Использовать имя "{URL_PROFILE_PREF}" в качестве username запрещено.'
-                    ]
-                }
-            )
-
-
-def validate_username_via_regex(value):
-    """Функция-валидатор. Проверяет, что username != me."""
-    difference = (set(value) - set(re.findall(USERNAME_PATTERN, value)))
-    if difference:
-        raise ValidationError(
-                {
-                    'username': [
-                        f'Использовать имя "{URL_PROFILE_PREF}" в качестве username запрещено.'
-                    ]
-                }
-            )
 
 
 class User(AbstractUser):
@@ -60,7 +34,7 @@ class User(AbstractUser):
     username = models.CharField(
         max_length=USERNAME_LENGTH,
         unique=True,
-        validators=(RegexValidator(regex=USERNAME_PATTERN), validate_not_me)
+        validators=(validate_not_me, validate_username_via_regex)
     )
     email = models.EmailField(
         max_length=EMAIL_FIELD_LENGTH,
