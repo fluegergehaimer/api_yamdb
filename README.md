@@ -48,7 +48,10 @@
 ```
 git clone git@github.com:fluegergehaimer/api_yamdb.git
 ```
-
+Перейти в папку с проектом:
+```
+cd api_yamdb
+```
 Cоздать и активировать виртуальное окружение:
 
 ```
@@ -86,9 +89,9 @@ python3 manage.py migrate
 python3 manage.py runserver
 ```
 Документация по API доступна при запущенном сервере по:
-```
-http://127.0.0.1:8000/redoc/
-```
+
+[Redoc](http://127.0.0.1:8000/redoc/)
+
 Для иморта данных из CSV файлов в БД воспользуйтесь коммандой:
 ```
 python3 manage.py import_csv

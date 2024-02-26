@@ -192,9 +192,17 @@ class SignUPAPIView(APIView):
         email = request.data.get("email")
 
         try:
-            user_1, status1 = User.objects.get_or_create(username=username, email=email)
-            confirmation_code = ''.join(random.choices(string.ascii_letters + string.digits, k=CONF_CODE_LENGTH))
-            User.objects.filter(username=username).update(confirmation_code=confirmation_code)
+            user_1, status1 = User.objects.get_or_create(
+                username=username,
+                email=email
+            )
+            confirmation_code = ''.join(random.choices(
+                string.ascii_letters + string.digits,
+                k=CONF_CODE_LENGTH
+            ))
+            User.objects.filter(username=username).update(
+                confirmation_code=confirmation_code
+            )
             send_success_email(user_1, confirmation_code)
 
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -228,7 +236,9 @@ class TokenAPIView(APIView):
                 'Отсутствует обязательное поле или оно некорректно'
             )
 
-        User.objects.filter(username=username).update(confirmation_code=NOT_APPLICABLE)
+        User.objects.filter(username=username).update(
+            confirmation_code=NOT_APPLICABLE
+        )
 
         return Response({
             'token': str(RefreshToken.for_user(user).access_token)

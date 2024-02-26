@@ -1,8 +1,13 @@
+"""Модуль с функциями-валидации."""
 import re
 
 from django.core.exceptions import ValidationError
+from django.utils.timezone import now
 
-from config import URL_PROFILE_PREF, USERNAME_PATTERN, CHAR_PATTERN, NOT_APPLICABLE
+from config import (
+    URL_PROFILE_PREF, USERNAME_PATTERN,
+    CHAR_PATTERN, NOT_APPLICABLE
+)
 
 
 def validate_not_me(username):
@@ -11,15 +16,15 @@ def validate_not_me(username):
         raise ValidationError(
                 {
                     'username': [
-                        f'Использовать имя "{URL_PROFILE_PREF}" в качестве username запрещено.'
+                        f'Использовать имя "{URL_PROFILE_PREF}" в '
+                        f'качестве username запрещено.'
                     ]
                 }
             )
 
 
 def validate_username_via_regex(username):
-    """Валидауия поля username."""
-
+    """Валидация поля username."""
     if not re.match(USERNAME_PATTERN, username):
         difference = set(username) - set(re.findall(CHAR_PATTERN, username))
         raise ValidationError(
@@ -33,10 +38,17 @@ def validate_username_via_regex(username):
 
 
 def validate_confirmation_code(confirmation_code):
-    """Валидауия поля username."""
+    """Валидация поля username."""
     if confirmation_code == NOT_APPLICABLE:
         raise ValidationError(
             {
                 "Отсутствует обязательное поле или оно некорректно"
             }
         )
+
+
+def validate_year(value):
+    """Валидация поля year."""
+    if value > now().year:
+        raise ValidationError('Нельзя добавить произведение из будущего')
+    return value
