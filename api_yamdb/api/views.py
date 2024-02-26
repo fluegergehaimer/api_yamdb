@@ -207,11 +207,7 @@ class SignUPAPIView(APIView):
 
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
-            raise serializers.ValidationError(
-                            {
-                                e
-                            }
-                        )
+            raise serializers.ValidationError({e})
 
 
 class TokenAPIView(APIView):
