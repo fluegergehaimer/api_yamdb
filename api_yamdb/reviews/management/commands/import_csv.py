@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 
 from reviews.models import (
     Category, Comment, Genre,
-    GenreTitle, Review, Title, User
+    Review, Title, User
 )
 
 
@@ -35,7 +35,7 @@ Models = {
     'category': Category,
     'comments': Comment,
     'genre': Genre,
-    'genre_title': GenreTitle,
+    'genre_title': Title.genre.through,
     'review': Review,
     'titles': Title,
     'users': User,
@@ -71,7 +71,8 @@ class Command(BaseCommand):
                         role=row['role'],
                         bio=row['bio'],
                         first_name=row['first_name'],
-                        last_name=row['last_name']
+                        last_name=row['last_name'],
+                        password='qwerty12345'
                     )
                 elif model_class == Category:
                     item = Category(
@@ -113,12 +114,12 @@ class Command(BaseCommand):
                         year=int(row['year']),
                         category=Category.objects.get(pk=category_id)
                     )
-                elif model_class == GenreTitle:
+                elif model_class == Title.genre.through:
                     genre_id = int(row['genre_id'])
                     title_id = int(row['title_id'])
-                    item = GenreTitle.objects.create(
+                    item = Title.genre.through.objects.create(
                         genre=Genre.objects.get(pk=genre_id),
-                        title_id=Title.objects.get(pk=title_id).id
+                        title=Title.objects.get(pk=title_id)
                     )
                 else:
                     self.stdout.write(
