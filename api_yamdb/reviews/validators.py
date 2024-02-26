@@ -49,6 +49,11 @@ def validate_confirmation_code(confirmation_code):
 
 def validate_year(value):
     """Валидация поля year."""
-    if value > now().year:
-        raise ValidationError('Нельзя добавить произведение из будущего')
+    current_year = now().year
+    if value > current_year:
+        raise ValidationError(
+            f'Нельзя добавить произведение из будущего. '
+            f'{value} еще не наступил.'
+            f'Сейчас {current_year} год.'
+        )
     return value
