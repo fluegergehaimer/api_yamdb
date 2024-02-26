@@ -14,13 +14,13 @@ def validate_not_me(username):
     """Функция-валидатор. Проверяет, что username != me."""
     if username == URL_PROFILE_PREF:
         raise ValidationError(
-                {
-                    'username': [
-                        f'Использовать имя "{URL_PROFILE_PREF}" в '
-                        f'качестве username запрещено.'
-                    ]
-                }
-            )
+            {
+                'username': [
+                    f'Использовать имя "{URL_PROFILE_PREF}" в '
+                    f'качестве username запрещено.'
+                ]
+            }
+        )
 
 
 def validate_username_via_regex(username):
