@@ -1,35 +1,39 @@
 """Модели."""
 
-import re
-
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import (MinValueValidator,
                                     MaxValueValidator)
 from django.db import models
-from django.utils import timezone
 
-from config import DEFAULT_ROLE, USER, MODERATOR, ADMIN, MIN_RATING, MAX_RATING, CONF_CODE_LENGTH, EMAIL_FIELD_LENGTH, USERNAME_LENGTH
-from reviews.validators import validate_not_me, validate_username_via_regex, validate_confirmation_code
+from config import (
+    DEFAULT_ROLE, MIN_RATING, MAX_RATING,
+    CONF_CODE_LENGTH, EMAIL_FIELD_LENGTH, USERNAME_LENGTH
+)
+from reviews.validators import (
+    validate_confirmation_code,
+    validate_not_me,
+    validate_username_via_regex,
+    validate_year
+)
 
 MIN_REQUIRED_RATING = f'Оценка не может быть ниже {MIN_RATING}.'
 MAX_REQUIRED_RATING = f'Оценка не может быть выше {MAX_RATING}.'
 NAME_MAX_LENGTH = 256
 SLUG_MAX_LENGTH = 50
 TEXT_LIMIT = 20
-#USERNAME_LENGTH = 150
-#CONFIRMATION_CODE_LENGTH = 16
-ROLE_FIELD_LENGTH = 9
-#EMAIL_FIELD_LENGTH = 254
 
 
 class User(AbstractUser):
     """Модель кастомного юзера."""
 
-    CHOICES = (
-        USER,
-        MODERATOR,
-        ADMIN,
-    )
+    ADMIN = 'admin'
+    MODERATOR = 'moderator'
+    USER = 'user'
+    CHOICES = [
+        (ADMIN, 'Администратор'),
+        (MODERATOR, 'Модератор'),
+        (USER, 'Пользователь'),
+    ]
 
     username = models.CharField(
         max_length=USERNAME_LENGTH,
@@ -46,7 +50,7 @@ class User(AbstractUser):
     )
     role = models.CharField(
         'Пользовательская роль',
-        max_length=ROLE_FIELD_LENGTH,
+        max_length=max(len(role) for _, role in CHOICES),
         choices=CHOICES,
         default=DEFAULT_ROLE,
         blank=True,
@@ -71,6 +75,16 @@ class User(AbstractUser):
     def __str__(self):
         """Возвращает email в качестве главного поля пользователя."""
         return self.email
+
+    @property
+    def is_admin(self):
+        """Клиент администратор."""
+        return self.role == self.ADMIN
+
+    @property
+    def is_moderator(self):
+        """Клиент модератор."""
+        return self.role == self.MODERATOR
 
 
 class NameSlugModel(models.Model):
@@ -127,7 +141,7 @@ class Title(models.Model):
     year = models.SmallIntegerField(
         verbose_name='Год',
         validators=[
-            MaxValueValidator(timezone.now().year),
+            validate_year
         ]
     )
     description = models.TextField(
@@ -161,32 +175,9 @@ class Title(models.Model):
         return self.name
 
 
-class GenreTitle(models.Model):
-    """Модель жанра произведения."""
-
-    genre = models.ForeignKey(
-        Genre,
-        on_delete=models.CASCADE,
-        verbose_name='Жанр'
-    )
-    title = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-        verbose_name='Произведение'
-    )
-
-    class Meta:
-        """Class Meta."""
-
-        verbose_name = 'Жанр произведения'
-        verbose_name_plural = 'Жанры произведений'
-
-    def __str__(self):
-        """Функция __str__."""
-        return f'{self.title} принадлежит жанру {self.genre}'
-
-
 class PubDateModel(models.Model):
+    """Базовая модель даты публикации."""
+
     pub_date = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата публикации',

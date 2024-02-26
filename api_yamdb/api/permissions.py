@@ -2,13 +2,6 @@
 
 from rest_framework import permissions
 
-from reviews.models import User
-
-USER = 0
-MODERATOR = 1
-ADMIN = 2
-ROLE_INDEX = 0
-
 
 class IsAdmin(permissions.BasePermission):
     """Пользователь - это admin или superamin django."""
@@ -16,7 +9,7 @@ class IsAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         """Пользователь - это admin или superamin django."""
         return request.user.is_authenticated and (
-            request.user.role == User.CHOICES[ADMIN][ROLE_INDEX]
+            request.user.is_admin
             or request.user.is_superuser
         )
 
@@ -42,7 +35,7 @@ class IsAuthorModeratorAdminOrReadOnly(permissions.BasePermission):
             or request.user.is_authenticated
             and (
                 obj.author == request.user
-                or request.user.role == User.CHOICES[ADMIN][ROLE_INDEX]
-                or request.user.role == User.CHOICES[MODERATOR][ROLE_INDEX]
+                or request.user.is_admin
+                or request.user.is_moderator
             )
         )

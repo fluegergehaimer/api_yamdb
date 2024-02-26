@@ -15,6 +15,6 @@ CONF_CODE_PATTERN = r'^[A-Za-z0-9]+$'
 SERVER_EMAIL = 'from@example.com'
 
 DEFAULT_ROLE = 'user'
-USER = ('user', 'Пользователь')
-MODERATOR = ('moderator', 'Модератор')
-ADMIN = ('admin', 'Админ')
+ADMIN = 'admin'
+MODERATOR = 'moderator'
+USER = 'user'
