@@ -16,8 +16,7 @@ from reviews.validators import (
     validate_year
 )
 
-MIN_REQUIRED_RATING = f'Оценка не может быть ниже {MIN_RATING}.'
-MAX_REQUIRED_RATING = f'Оценка не может быть выше {MAX_RATING}.'
+
 NAME_MAX_LENGTH = 256
 SLUG_MAX_LENGTH = 50
 TEXT_LIMIT = 20
@@ -66,7 +65,6 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username']
 
     class Meta:
-        """Meta-клас. Задаёт сортировку по полю id."""
 
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
@@ -79,7 +77,7 @@ class User(AbstractUser):
     @property
     def is_admin(self):
         """Клиент администратор."""
-        return self.role == self.ADMIN
+        return self.role == self.ADMIN or self.is_staff
 
     @property
     def is_moderator(self):
@@ -101,21 +99,18 @@ class NameSlugModel(models.Model):
     )
 
     class Meta:
-        """Class Meta."""
 
         abstract = True
         ordering = ('name',)
 
     def __str__(self):
-        """Функция __str__."""
         return self.name[:TEXT_LIMIT]
 
 
 class Genre(NameSlugModel):
     """Модель жанра."""
 
-    class Meta:
-        """Class Meta."""
+    class Meta(NameSlugModel.Meta):
 
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
@@ -124,8 +119,7 @@ class Genre(NameSlugModel):
 class Category(NameSlugModel):
     """Модель категории."""
 
-    class Meta:
-        """Class Meta."""
+    class Meta(NameSlugModel.Meta):
 
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
@@ -152,7 +146,7 @@ class Title(models.Model):
     genre = models.ManyToManyField(
         Genre,
         verbose_name='Жанр',
-        related_name='title_genre'
+        related_name='titles'
     )
     category = models.ForeignKey(
         Category,
@@ -160,41 +154,44 @@ class Title(models.Model):
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
-        related_name='title_category'
+        related_name='titles'
     )
 
     class Meta:
-        """Class Meta."""
 
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
         ordering = ('year', 'name')
 
     def __str__(self):
-        """Функция __str__."""
         return self.name
 
 
-class PubDateModel(models.Model):
-    """Базовая модель даты публикации."""
+class AuthorTextPubDateModel(models.Model):
+    """Базовая модель для комментариев и отзывов."""
 
     pub_date = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата публикации',
     )
+    text = models.TextField(
+        verbose_name='Текст',
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+    )
 
     class Meta:
-        """Class Meta."""
 
         abstract = True
         ordering = ('-pub_date',)
 
     def __str__(self):
-        """Функция __str__."""
         return self.text[:TEXT_LIMIT]
 
 
-class Review(PubDateModel):
+class Review(AuthorTextPubDateModel):
     """Модель отзыва."""
 
     title = models.ForeignKey(
@@ -202,25 +199,21 @@ class Review(PubDateModel):
         on_delete=models.CASCADE,
         related_name='reviews',
     )
-    text = models.TextField(
-        verbose_name='Текст отзыва',
-        help_text='Оставить отзыв.',
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='reviews',
-    )
     score = models.PositiveSmallIntegerField(
         validators=[
-            MinValueValidator(MIN_RATING, MIN_REQUIRED_RATING),
-            MaxValueValidator(MAX_RATING, MAX_REQUIRED_RATING)
+            MinValueValidator(
+                MIN_RATING,
+                f'Оценка не может быть ниже {MIN_RATING}.'
+            ),
+            MaxValueValidator(
+                MAX_RATING,
+                f'Оценка не может быть выше {MAX_RATING}.'
+            )
         ],
         verbose_name='Оценка',
     )
 
-    class Meta:
-        """Class Meta."""
+    class Meta(AuthorTextPubDateModel.Meta):
 
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
@@ -232,7 +225,7 @@ class Review(PubDateModel):
         ]
 
 
-class Comment(PubDateModel):
+class Comment(AuthorTextPubDateModel):
     """Модель комментария."""
 
     review = models.ForeignKey(
@@ -240,17 +233,8 @@ class Comment(PubDateModel):
         on_delete=models.CASCADE,
         related_name='comments',
     )
-    text = models.TextField(
-        verbose_name='Текст комментария',
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='comments',
-    )
 
-    class Meta:
-        """Class Meta."""
+    class Meta(AuthorTextPubDateModel.Meta):
 
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'

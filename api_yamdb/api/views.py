@@ -9,9 +9,11 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, serializers, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import (AllowAny,
-                                        IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly
+)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
@@ -22,22 +24,28 @@ from api.serializers import (
     GenreSerializer, ReviewSerializer,
     TitleCreateUpdateSerializer, TitleSerializer,
 )
-from config import SERVER_EMAIL, URL_PROFILE_PREF, NOT_APPLICABLE
+from config import (
+    CONF_CODE_LENGTH, SERVER_EMAIL,
+    URL_PROFILE_PREF, NOT_APPLICABLE
+)
 from reviews.models import Category, Genre, Review, Title, User
 from . import permissions
-from .serializers import (SignUPSerializer,
-                          TokenSerializer,
-                          UserSerializer,
-                          UserUpdateSerializer)
+from .serializers import (
+    SignUPSerializer,
+    TokenSerializer,
+    UserSerializer,
+    UserUpdateSerializer
+)
 
 HTTP_METHODS = ('get', 'post', 'patch', 'delete')
-CONF_CODE_LENGTH = 16
 
 
-class CategoryGenreMixin(mixins.ListModelMixin,
-                         mixins.CreateModelMixin,
-                         mixins.DestroyModelMixin,
-                         viewsets.GenericViewSet):
+class CategoryGenreMixin(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
     """Базовый класс."""
 
     permission_classes = (permissions.IsAdminOrReadOnly,)
@@ -187,10 +195,8 @@ class SignUPAPIView(APIView):
         """
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         username = request.data.get("username")
         email = request.data.get("email")
-
         try:
             user_1, status1 = User.objects.get_or_create(
                 username=username,
@@ -204,7 +210,6 @@ class SignUPAPIView(APIView):
                 confirmation_code=confirmation_code
             )
             send_success_email(user_1, confirmation_code)
-
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             raise serializers.ValidationError({e})
@@ -223,19 +228,15 @@ class TokenAPIView(APIView):
         """
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         username = request.data.get("username")
-
         user = get_object_or_404(User, username=username)
         if request.data.get('confirmation_code') != user.confirmation_code:
             raise serializers.ValidationError(
                 'Отсутствует обязательное поле или оно некорректно'
             )
-
         User.objects.filter(username=username).update(
             confirmation_code=NOT_APPLICABLE
         )
-
         return Response({
             'token': str(RefreshToken.for_user(user).access_token)
         },

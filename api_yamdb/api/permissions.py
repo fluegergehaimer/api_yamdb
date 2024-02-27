@@ -8,10 +8,7 @@ class IsAdmin(permissions.BasePermission):
 
     def has_permission(self, request, view):
         """Пользователь - это admin или superamin django."""
-        return request.user.is_authenticated and (
-            request.user.is_admin
-            or request.user.is_superuser
-        )
+        return request.user.is_authenticated and request.user.is_admin
 
 
 class IsAdminOrReadOnly(IsAdmin):
@@ -32,10 +29,7 @@ class IsAuthorModeratorAdminOrReadOnly(permissions.BasePermission):
         """Пользователь - это автор объекта либо moderator/admin."""
         return (
             request.method in permissions.SAFE_METHODS
-            or request.user.is_authenticated
-            and (
-                obj.author == request.user
-                or request.user.is_admin
-                or request.user.is_moderator
-            )
+            or obj.author == request.user
+            or request.user.is_admin
+            or request.user.is_moderator
         )

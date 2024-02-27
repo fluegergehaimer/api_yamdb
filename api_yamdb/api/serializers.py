@@ -3,13 +3,16 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework import serializers
 
-from config import (MIN_RATING, MAX_RATING,
-                    USERNAME_LENGTH, EMAIL_FIELD_LENGTH,
-                    CONF_CODE_LENGTH)
+from config import (
+    MIN_RATING, MAX_RATING,
+    USERNAME_LENGTH, EMAIL_FIELD_LENGTH,
+    CONF_CODE_LENGTH
+)
 from reviews.models import Category, Genre, Title, Review, Comment, User
-from reviews.validators import (validate_confirmation_code,
-                                validate_not_me,
-                                validate_username_via_regex)
+from reviews.validators import (
+    validate_confirmation_code,
+    validate_not_me,
+    validate_username_via_regex)
 
 
 class CategorySerializer(serializers.ModelSerializer):
