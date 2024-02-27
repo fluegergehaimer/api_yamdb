@@ -6,11 +6,10 @@ from django.core.validators import (MinValueValidator,
 from django.db import models
 
 from config import (
-    DEFAULT_ROLE, MIN_RATING, MAX_RATING,
+    MIN_RATING, MAX_RATING,
     CONF_CODE_LENGTH, EMAIL_FIELD_LENGTH, USERNAME_LENGTH
 )
 from reviews.validators import (
-    validate_confirmation_code,
     validate_not_me,
     validate_username_via_regex,
     validate_year
@@ -51,14 +50,13 @@ class User(AbstractUser):
         'Пользовательская роль',
         max_length=max(len(role) for _, role in CHOICES),
         choices=CHOICES,
-        default=DEFAULT_ROLE,
+        default=USER,
         blank=True,
     )
     confirmation_code = models.CharField(
         max_length=CONF_CODE_LENGTH,
         blank=True,
         null=True,
-        validators=(validate_confirmation_code,)
     )
 
     USERNAME_FIELD = 'email'

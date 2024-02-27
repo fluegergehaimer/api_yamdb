@@ -10,7 +10,6 @@ from config import (
 )
 from reviews.models import Category, Genre, Title, Review, Comment, User
 from reviews.validators import (
-    validate_confirmation_code,
     validate_not_me,
     validate_username_via_regex)
 
@@ -174,6 +173,5 @@ class TokenSerializer(serializers.Serializer):
     )
     confirmation_code = serializers.CharField(
         max_length=CONF_CODE_LENGTH,
-        required=True,
-        validators=(validate_confirmation_code,)
+        required=True
     )
