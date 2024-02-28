@@ -5,8 +5,7 @@ from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 
 from config import (
-    URL_PROFILE_PREF, USERNAME_PATTERN,
-    CHAR_PATTERN, NOT_APPLICABLE
+    URL_PROFILE_PREF, USERNAME_INVALID_PATTERN,
 )
 
 
@@ -14,37 +13,23 @@ def validate_not_me(username):
     """Функция-валидатор. Проверяет, что username != me."""
     if username == URL_PROFILE_PREF:
         raise ValidationError(
-            {
-                'username': [
-                    f'Использовать имя "{URL_PROFILE_PREF}" в '
-                    f'качестве username запрещено.'
-                ]
-            }
+            f'Использовать имя "{URL_PROFILE_PREF}" в '
+            f'качестве username запрещено.'
         )
+
+    return username
 
 
 def validate_username_via_regex(username):
     """Валидация поля username."""
-    if not re.match(USERNAME_PATTERN, username):
-        difference = set(username) - set(re.findall(CHAR_PATTERN, username))
+    invalid_characters = set(re.findall(USERNAME_INVALID_PATTERN, username))
+    if invalid_characters:
         raise ValidationError(
-            {
-                'username': [
-                    f'Недопустимые символы в username: '
-                    f'{difference}'
-                ]
-            }
+            f'Недопустимые символы в username: '
+            f'{invalid_characters}'
         )
 
-
-def validate_confirmation_code(confirmation_code):
-    """Валидация поля username."""
-    if confirmation_code == NOT_APPLICABLE:
-        raise ValidationError(
-            {
-                "Отсутствует обязательное поле или оно некорректно"
-            }
-        )
+    return username
 
 
 def validate_year(value):

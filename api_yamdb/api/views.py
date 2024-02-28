@@ -1,10 +1,10 @@
 """Views."""
 
 import random
-import string
 
 from django.core.mail import send_mail
 from django.db.models import Avg
+from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, serializers, status, viewsets
@@ -25,8 +25,9 @@ from api.serializers import (
     TitleCreateUpdateSerializer, TitleSerializer,
 )
 from config import (
-    CONF_CODE_LENGTH, SERVER_EMAIL,
-    URL_PROFILE_PREF, NOT_APPLICABLE
+    CONF_CODE_LENGTH, CONF_CODE_PATTERN,
+    SERVER_EMAIL, URL_PROFILE_PREF,
+    NOT_APPLICABLE
 )
 from reviews.models import Category, Genre, Review, Title, User
 from . import permissions
@@ -198,21 +199,23 @@ class SignUPAPIView(APIView):
         username = request.data.get("username")
         email = request.data.get("email")
         try:
-            user_1, status1 = User.objects.get_or_create(
+            user, status1 = User.objects.get_or_create(
                 username=username,
                 email=email
             )
-            confirmation_code = ''.join(random.choices(
-                string.ascii_letters + string.digits,
-                k=CONF_CODE_LENGTH
-            ))
-            User.objects.filter(username=username).update(
-                confirmation_code=confirmation_code
+        except IntegrityError as error:
+            raise serializers.ValidationError(
+                f'{str(error).split(".")[1].strip()}: Отсутствует обязательное поле или оно некорректно.'
             )
-            send_success_email(user_1, confirmation_code)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except Exception as e:
-            raise serializers.ValidationError({e})
+
+        confirmation_code = ''.join(random.choices(
+            CONF_CODE_PATTERN,
+            k=CONF_CODE_LENGTH
+        ))
+        user.confirmation_code = confirmation_code
+        user.save()
+        send_success_email(user, confirmation_code)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class TokenAPIView(APIView):
@@ -226,17 +229,25 @@ class TokenAPIView(APIView):
 
         Если данные не валидны возвращает ошибку.
         """
+        confirmation_code = request.data.get('confirmation_code')
+        if confirmation_code == NOT_APPLICABLE:
+            raise serializers.ValidationError(
+                {
+                    'confirmation_code: Отсутствует обязательное поле или оно некорректно.'
+                }
+            )
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         username = request.data.get("username")
         user = get_object_or_404(User, username=username)
-        if request.data.get('confirmation_code') != user.confirmation_code:
+        if confirmation_code != user.confirmation_code:
+            user.confirmation_code = NOT_APPLICABLE
+            user.save()
             raise serializers.ValidationError(
-                'Отсутствует обязательное поле или оно некорректно'
+                'confirmation_code: Отсутствует обязательное поле или оно некорректно.'
             )
-        User.objects.filter(username=username).update(
-            confirmation_code=NOT_APPLICABLE
-        )
+        user.confirmation_code = NOT_APPLICABLE
+        user.save()
         return Response({
             'token': str(RefreshToken.for_user(user).access_token)
         },
