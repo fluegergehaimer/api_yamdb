@@ -39,6 +39,7 @@ from .serializers import (
 )
 
 HTTP_METHODS = ('get', 'post', 'patch', 'delete')
+CONFORMATION_ERROR = 'confirmation_code: Отсутствует обязательное поле или оно некорректно.'
 
 
 class CategoryGenreMixin(
@@ -205,7 +206,8 @@ class SignUPAPIView(APIView):
             )
         except IntegrityError as error:
             raise serializers.ValidationError(
-                f'{str(error).split(".")[1].strip()}: Отсутствует обязательное поле или оно некорректно.'
+                f'{str(error).split(".")[1].strip()}: '
+                f'Отсутствует обязательное поле или оно некорректно.'
             )
 
         confirmation_code = ''.join(random.choices(
@@ -233,7 +235,7 @@ class TokenAPIView(APIView):
         if confirmation_code == NOT_APPLICABLE:
             raise serializers.ValidationError(
                 {
-                    'confirmation_code: Отсутствует обязательное поле или оно некорректно.'
+                    CONFORMATION_ERROR
                 }
             )
         serializer = self.serializer_class(data=request.data)
@@ -244,7 +246,7 @@ class TokenAPIView(APIView):
             user.confirmation_code = NOT_APPLICABLE
             user.save()
             raise serializers.ValidationError(
-                'confirmation_code: Отсутствует обязательное поле или оно некорректно.'
+                CONFORMATION_ERROR
             )
         user.confirmation_code = NOT_APPLICABLE
         user.save()
