@@ -39,7 +39,9 @@ from .serializers import (
 )
 
 HTTP_METHODS = ('get', 'post', 'patch', 'delete')
-CONFORMATION_ERROR = 'confirmation_code: Отсутствует обязательное поле или оно некорректно.'
+CONFORMATION_ERROR = (
+    'confirmation_code: Отсутствует обязательное поле или оно некорректно.'
+)
 
 
 class CategoryGenreMixin(
