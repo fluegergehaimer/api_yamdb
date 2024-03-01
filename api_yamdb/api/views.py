@@ -2,6 +2,7 @@
 
 import random
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.db.utils import IntegrityError
@@ -27,7 +28,7 @@ from api.serializers import (
 from config import (
     CONF_CODE_LENGTH, CONF_CODE_PATTERN,
     SERVER_EMAIL, URL_PROFILE_PREF,
-    NOT_APPLICABLE
+    NOT_APPLICABLE_CONF_CODE
 )
 from reviews.models import Category, Genre, Review, Title, User
 from . import permissions
@@ -39,7 +40,7 @@ from .serializers import (
 )
 
 HTTP_METHODS = ('get', 'post', 'patch', 'delete')
-CONFORMATION_ERROR = (
+CONFIRMATION_ERROR = (
     'confirmation_code: Отсутствует обязательное поле или оно некорректно.'
 )
 
@@ -144,11 +145,11 @@ class CommentViewSet(viewsets.ModelViewSet):
         return self.get_review().comments.all()
 
 
-def send_success_email(user, confirmation_code):
+def send_success_email(user):
     """Отправляет email с кодом подтверждения."""
     send_mail(
         subject='Регистрация',
-        message=f'Ваш confirmation_code: {confirmation_code}',
+        message=f'Ваш confirmation_code: {user.confirmation_code}',
         from_email=SERVER_EMAIL,
         recipient_list=[user.email],
         fail_silently=True,
@@ -199,26 +200,38 @@ class SignUPAPIView(APIView):
         """
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        username = request.data.get("username")
-        email = request.data.get("email")
+        username = request.data.get('username')
+        email = request.data.get('email')
         try:
-            user, status1 = User.objects.get_or_create(
+            user, query_status = User.objects.get_or_create(
                 username=username,
                 email=email
             )
-        except IntegrityError as error:
-            raise serializers.ValidationError(
-                f'{str(error).split(".")[1].strip()}: '
-                f'Отсутствует обязательное поле или оно некорректно.'
-            )
+        except IntegrityError:
+            try:
+                User.objects.get(username=username)
+                raise serializers.ValidationError(
+                    {
+                        'username': [
+                            'Обязательное поле некорректно.'
+                        ]
+                    }
+                )
+            except ObjectDoesNotExist:
+                raise serializers.ValidationError(
+                    {
+                        'email': [
+                            'Обязательное поле некорректно.'
+                        ]
+                    }
+                )
 
-        confirmation_code = ''.join(random.choices(
+        user.confirmation_code = ''.join(random.choices(
             CONF_CODE_PATTERN,
             k=CONF_CODE_LENGTH
         ))
-        user.confirmation_code = confirmation_code
         user.save()
-        send_success_email(user, confirmation_code)
+        send_success_email(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -234,24 +247,16 @@ class TokenAPIView(APIView):
         Если данные не валидны возвращает ошибку.
         """
         confirmation_code = request.data.get('confirmation_code')
-        if confirmation_code == NOT_APPLICABLE:
-            raise serializers.ValidationError(
-                {
-                    CONFORMATION_ERROR
-                }
-            )
+        if confirmation_code == NOT_APPLICABLE_CONF_CODE:
+            raise serializers.ValidationError(CONFIRMATION_ERROR)
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        username = request.data.get("username")
+        username = request.data.get('username')
         user = get_object_or_404(User, username=username)
         if confirmation_code != user.confirmation_code:
-            user.confirmation_code = NOT_APPLICABLE
+            user.confirmation_code = NOT_APPLICABLE_CONF_CODE
             user.save()
-            raise serializers.ValidationError(
-                CONFORMATION_ERROR
-            )
-        user.confirmation_code = NOT_APPLICABLE
-        user.save()
+            raise serializers.ValidationError(CONFIRMATION_ERROR)
         return Response({
             'token': str(RefreshToken.for_user(user).access_token)
         },
