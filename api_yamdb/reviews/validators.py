@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 
 from config import (
-    URL_PROFILE_PREF, USERNAME_INVALID_PATTERN,
+    URL_PROFILE_PREF, USERNAME_VALID_PATTERN,
 )
 
 
@@ -22,7 +22,10 @@ def validate_not_me(username):
 
 def validate_username_via_regex(username):
     """Валидация поля username."""
-    invalid_characters = set(re.findall(USERNAME_INVALID_PATTERN, username))
+    invalid_characters = set(username) - set(re.findall(
+        USERNAME_VALID_PATTERN,
+        username)
+    )
     if invalid_characters:
         raise ValidationError(
             f'В username найдены недопустимые символы '
