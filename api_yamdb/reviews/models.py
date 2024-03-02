@@ -48,7 +48,7 @@ class User(AbstractUser):
     )
     role = models.CharField(
         'Пользовательская роль',
-        max_length=max(len(role) for role in [ADMIN, MODERATOR, USER]),
+        max_length=max(len(role) for role, _ in CHOICES),
         choices=CHOICES,
         default=USER,
         blank=True,
@@ -162,7 +162,7 @@ class Title(models.Model):
         ordering = ('year', 'name')
 
     def __str__(self):
-        return self.name
+        return self.name[:TEXT_LIMIT]
 
 
 class AuthorTextPubDateModel(models.Model):
@@ -178,6 +178,7 @@ class AuthorTextPubDateModel(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        related_name='%(class)s_author'
     )
 
     class Meta:
@@ -195,7 +196,6 @@ class Review(AuthorTextPubDateModel):
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
-        related_name='reviews',
     )
     score = models.PositiveSmallIntegerField(
         validators=[
@@ -215,6 +215,7 @@ class Review(AuthorTextPubDateModel):
 
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
+        default_related_name = 'reviews'
         constraints = [
             models.UniqueConstraint(
                 fields=('title', 'author',),
@@ -229,10 +230,10 @@ class Comment(AuthorTextPubDateModel):
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
-        related_name='comments',
     )
 
     class Meta(AuthorTextPubDateModel.Meta):
 
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
+        default_related_name = 'comments'
