@@ -25,8 +25,8 @@ def validate_username_via_regex(username):
     invalid_characters = set(re.findall(USERNAME_INVALID_PATTERN, username))
     if invalid_characters:
         raise ValidationError(
-            f'Недопустимые символы в username: '
-            f'{invalid_characters}'
+            f'В username найдены недопустимые символы '
+            f'{"".join(invalid_characters)}'
         )
 
     return username
