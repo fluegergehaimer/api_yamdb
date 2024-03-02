@@ -12,14 +12,6 @@ for i in results:
     print(i)
 
 print('results_1:', results_1)
-# for i in results_1:
-#     print(i)
 
 split_string = re.split(pattern, username)
 print(split_string)
-
-# results = re.finditer (r'мыла', 'Мама мыла раму, а потом ещё раз мыла, потому что не домыла')
-# print (results)
-#
-# for match in results:
-#     print (match)
